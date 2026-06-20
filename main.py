@@ -79,7 +79,7 @@ def run_single_category(category: str, start: int, end: int):
         print(f"⚠️ No links found — skipping.")
         return None
 
-    s2 = products_scraper.run(links_csv, products_json, workers=4)
+    s2 = s2 = products_scraper.run(links_csv, products_json, workers=4, category=category)
     s3 = flatten.run(products_json)
 
     df = s3["df"]

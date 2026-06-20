@@ -223,8 +223,9 @@ jobs:
         run: |
           python << 'EOF'
           import pandas as pd
-          import glob, boto3, os
+          import glob, os
           from datetime import datetime
+          from r2_uploader import upload_final_batch_assets
 
           category = "${{ matrix.category }}"
           files = glob.glob('excel_parts/*.xlsx')
@@ -244,6 +245,14 @@ jobs:
           total = len(merged)
           print(f"Category: {category} | Rows: {total} | Files merged: {len(files)}")
 
+          result = upload_final_batch_assets(
+              images_folder="",
+              final_excel=output_file,
+              folder_name="qatarsale",
+              category=category
+          )
+          print(f"Upload result: {result}")
+
           summary_file = f"scrape_summary_{category}.txt"
           with open(summary_file, 'w', encoding='utf-8') as f:
               f.write(f"=== {category} ===\n")
@@ -254,21 +263,6 @@ jobs:
                   missing = merged[col].isna().sum() + (merged[col] == '').sum()
                   pct = (missing / total) * 100 if total > 0 else 0
                   f.write(f"{col}: {missing} empty ({pct:.2f}%)\n")
-
-          client = boto3.client(
-              's3',
-              endpoint_url=os.environ['CF_R2_ENDPOINT_URL'],
-              aws_access_key_id=os.environ['CF_R2_ACCESS_KEY_ID'],
-              aws_secret_access_key=os.environ['CF_R2_SECRET_ACCESS_KEY'],
-              region_name='auto'
-          )
-          dt = datetime.now()
-          key = f"qatarsale/{dt.year}/{dt.strftime('%B').lower()}/{dt.day}/{output_file}"
-          client.upload_file(
-              output_file, bucket := os.environ['CF_R2_BUCKET_NAME'], key,
-              ExtraArgs={'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}
-          )
-          print(f"Uploaded to R2: {key}")
           EOF
 
       - name: Collect failed URLs

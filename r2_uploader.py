@@ -34,23 +34,24 @@ def get_r2_client():
 R2_CLIENT_INSTANCE = get_r2_client()
 
 
-def build_r2_key(folder_name: str, file_type: str, filename: str, dt: datetime = None) -> str:
+def build_r2_key(folder_name: str, category: str, file_type: str, filename: str, dt: datetime = None) -> str:
     if dt is None:
         dt = datetime.now()
     
-    year  = str(dt.year)
-    month = dt.strftime("%B").lower()
-    day   = str(dt.day)
+    year  = f"year={dt.year}"
+    month = f"month={dt.strftime('%m')}"
+    day   = f"day={dt.strftime('%d')}"
     
     if file_type:
-        return f"{folder_name}/{year}/{month}/{day}/{file_type}/{filename}"
+        return f"{folder_name}/{year}/{month}/{day}/{category}/{file_type}/{filename}"
     else:
-        return f"{folder_name}/{year}/{month}/{day}/{filename}"
+        return f"{folder_name}/{year}/{month}/{day}/{category}/{filename}"
 
 
 def upload_single_file(
     local_path: str,
     folder_name: str = "qatarsale",
+    category: str = "",
     file_type: str = "images",
     dt: datetime = None
 ) -> bool:
@@ -59,7 +60,7 @@ def upload_single_file(
         return False
 
     filename = Path(local_path).name
-    r2_key = build_r2_key(folder_name, file_type, filename, dt)
+    r2_key = build_r2_key(folder_name, category, file_type, filename, dt)
 
     try:
         content_type, _ = mimetypes.guess_type(local_path)
@@ -80,6 +81,7 @@ def upload_buffer(
     buffer: io.BytesIO,
     filename: str,
     folder_name: str = "qatarsale",
+    category: str = "",
     file_type: str = "images",
     content_type: str = "image/webp",
     dt: datetime = None
@@ -88,7 +90,7 @@ def upload_buffer(
     if not client or not BUCKET_NAME:
         return None
 
-    r2_key = build_r2_key(folder_name, file_type, filename, dt)
+    r2_key = build_r2_key(folder_name, category, file_type, filename, dt)
 
     try:
         buffer.seek(0)
@@ -101,26 +103,26 @@ def upload_buffer(
         print(f"  [ERROR] R2 upload failed for {filename}: {e}")
         return None
 
-def upload_final_batch_assets(images_folder: str, final_csv: str, folder_name: str = "qatarsale") -> dict:
+def upload_final_batch_assets(images_folder: str, final_excel: str, folder_name: str = "qatarsale", category: str = "") -> dict:
     print("\n" + "="*50)
-    print("STEP 4: Uploading final CSV artifact to Cloudflare R2...")
+    print("STEP 4: Uploading final Excel artifact to Cloudflare R2...")
     print("="*50)
 
     uploaded = 0
     failed = 0
     dt = datetime.now()
 
-    if os.path.exists(final_csv):
-        print(f"Found final flat CSV file '{final_csv}', starting upload...")
-        success = upload_single_file(final_csv, folder_name=folder_name, file_type="", dt=dt)
+    if os.path.exists(final_excel):
+        print(f"Found final Excel file '{final_excel}', starting upload...")
+        success = upload_single_file(final_excel, folder_name=folder_name, category=category, file_type="excel", dt=dt)
         if success:
             uploaded += 1
-            print("-> Final CSV Artifact Uploaded successfully to R2!")
+            print("-> Final Excel Artifact Uploaded successfully to R2!")
         else:
             failed += 1
-            print("-> [ERROR] Failed to upload final CSV to R2.")
+            print("-> [ERROR] Failed to upload final Excel to R2.")
     else:
-        print(f"-> [WARNING] CSV Artifact NOT found at: {final_csv}")
+        print(f"-> [WARNING] Excel Artifact NOT found at: {final_excel}")
         failed += 1
 
     return {"uploaded": uploaded, "failed": failed}

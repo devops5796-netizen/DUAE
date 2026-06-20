@@ -162,7 +162,7 @@ def parse_product(page) -> dict:
     }
 
 
-def download_images(images: list, images_folder: str = None, fmt: str = "PNG") -> list:
+def download_images(images: list, category: str = "", fmt: str = "PNG") -> list:
     r2_paths = []
     uploaded = 0
     failed = 0
@@ -186,7 +186,13 @@ def download_images(images: list, images_folder: str = None, fmt: str = "PNG") -
                     img.save(output_buffer, format="JPEG", quality=90)
                 else:
                     img.save(output_buffer, format="PNG")
-                r2_key = upload_buffer(output_buffer, filename=f"{original_name}.{ext}", content_type=content_type)
+                r2_key = upload_buffer(
+                    output_buffer,
+                    filename=f"{original_name}.{ext}",
+                    category=category,       
+                    file_type="images",
+                    content_type=content_type
+                )
                 if r2_key:
                     r2_paths.append(r2_key)
                     uploaded += 1
@@ -200,23 +206,23 @@ def download_images(images: list, images_folder: str = None, fmt: str = "PNG") -
     print(f"  Images: {uploaded} uploaded, {failed} failed out of {len(images)}")
     return r2_paths
 
-def scrape_single(url: str, images_folder: str = "images") -> dict:
+def scrape_single(url: str, category: str = "") -> dict:
     try:
         page = StealthyFetcher.fetch(
             url,
             headless=True,
             network_idle=True,
-            timeout=60000,                   
+            timeout=60000,
             wait_for_idle_network_timeout=10000
         )
         data = parse_product(page)
-        data["images_local_paths"] = download_images(data.get("images", []), images_folder)
+        data["images_local_paths"] = download_images(data.get("images", []), category=category)
         return data
     except Exception as e:
         print(f"  Error URL: {url} -> {e}")
         return {}
         
-def run(links_csv: str, output_json: str, workers: int = 5):
+def run(links_csv: str, output_json: str, workers: int = 5, category: str = ""):
     print("\n" + "="*50)
     print(f"STEP 2: Scraping product pages ({workers} workers)...")
     print("="*50)
@@ -252,7 +258,7 @@ def run(links_csv: str, output_json: str, workers: int = 5):
     failed_urls = []
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = {executor.submit(scrape_single, url, "images"): url for url in urls_to_scrape}
+        futures = {executor.submit(scrape_single, url, category): url for url in urls_to_scrape}
 
         for future in as_completed(futures):
             url = futures[future]
@@ -306,7 +312,7 @@ def run(links_csv: str, output_json: str, workers: int = 5):
         print(f"\nRetrying {len(failed_urls)} failed URLs...")
         still_failed = []
         with ThreadPoolExecutor(max_workers=2) as executor:
-            futures = {executor.submit(scrape_single, url, "images"): url for url in failed_urls}
+            futures = {executor.submit(scrape_single, url, category): url for url in failed_urls}
             for future in as_completed(futures):
                 url = futures[future]
                 try:
