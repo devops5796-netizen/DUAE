@@ -184,8 +184,6 @@ jobs:
   merge:
     runs-on: ubuntu-latest
     needs: scrape
-    permissions:
-      contents: write
 
     strategy:
       matrix:
@@ -223,7 +221,7 @@ jobs:
         run: |
           python << 'EOF'
           import pandas as pd
-          import glob, os
+          import glob, os, boto3
           from datetime import datetime
           from r2_uploader import upload_final_batch_assets
 
@@ -253,24 +251,34 @@ jobs:
           )
           print(f"Upload result: {result}")
 
+          dt = datetime.now()
+          client = boto3.client('s3',
+              endpoint_url=os.environ['CF_R2_ENDPOINT_URL'],
+              aws_access_key_id=os.environ['CF_R2_ACCESS_KEY_ID'],
+              aws_secret_access_key=os.environ['CF_R2_SECRET_ACCESS_KEY'],
+              region_name='auto'
+          )
+          bucket = os.environ['CF_R2_BUCKET_NAME']
+          base_key = f"qatarsale/year={dt.year}/month={dt.strftime('%m')}/day={dt.strftime('%d')}/{category}/summary"
+
+          # Summary
           summary_file = f"scrape_summary_{category}.txt"
           with open(summary_file, 'w', encoding='utf-8') as f:
               f.write(f"=== {category} ===\n")
-              f.write(f"Date: {datetime.now().strftime('%Y-%m-%d')}\n")
+              f.write(f"Run Date: {dt.strftime('%Y-%m-%d %H:%M:%S')} UTC\n")
+              f.write(f"Status: DONE\n")
               f.write(f"Total Rows: {total}\n")
               f.write(f"Files Merged: {len(files)}\n\n")
               for col in merged.columns:
                   missing = merged[col].isna().sum() + (merged[col] == '').sum()
                   pct = (missing / total) * 100 if total > 0 else 0
                   f.write(f"{col}: {missing} empty ({pct:.2f}%)\n")
-          EOF
 
-      - name: Collect failed URLs
-        run: |
-          python << 'EOF'
-          import glob
+          client.upload_file(summary_file, bucket, f"{base_key}/scrape_summary.txt",
+              ExtraArgs={'ContentType': 'text/plain; charset=utf-8'})
+          print(f"Summary uploaded: {base_key}/scrape_summary.txt")
 
-          category = "${{ matrix.category }}"
+          # Failed URLs
           failed = []
           for f in glob.glob('excel_parts/*_failed.txt'):
               with open(f, 'r', encoding='utf-8') as file:
@@ -279,71 +287,16 @@ jobs:
                       if line.startswith('http'):
                           failed.append(line)
 
-          with open(f'failed_urls_{category}.txt', 'w', encoding='utf-8') as f:
+          failed_file = f"failed_urls_{category}.txt"
+          with open(failed_file, 'w', encoding='utf-8') as f:
               f.write(f"=== {category} ===\n")
               f.write(f"Total Failed URLs: {len(failed)}\n\n")
               for u in failed:
                   f.write(u + '\n')
 
-          print(f"Failed URLs for {category}: {len(failed)}")
+          client.upload_file(failed_file, bucket, f"{base_key}/failed_urls.txt",
+              ExtraArgs={'ContentType': 'text/plain; charset=utf-8'})
+          print(f"Failed URLs uploaded: {base_key}/failed_urls.txt")
           EOF
 
-      - name: Upload summary artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: summary-${{ matrix.category }}
-          path: |
-            scrape_summary_${{ matrix.category }}.txt
-            failed_urls_${{ matrix.category }}.txt
 
-  collect_summaries:
-    runs-on: ubuntu-latest
-    needs: merge
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Download all summary artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: summary-*
-          merge-multiple: true
-          path: all_summaries/
-
-      - name: Merge summaries and failed URLs
-        run: |
-          python << 'EOF'
-          import glob, os
-          from datetime import datetime
-
-          with open('scrape_summary.txt', 'w', encoding='utf-8') as out:
-              out.write(f'Scrape Summary — {datetime.now().strftime("%Y-%m-%d")}\n')
-              out.write('='*50 + '\n\n')
-              for f in sorted(glob.glob('all_summaries/scrape_summary_*.txt')):
-                  with open(f, 'r', encoding='utf-8') as file:
-                      out.write(file.read() + '\n')
-
-          with open('failed_urls.txt', 'w', encoding='utf-8') as out:
-              for f in sorted(glob.glob('all_summaries/failed_urls_*.txt')):
-                  with open(f, 'r', encoding='utf-8') as file:
-                      out.write(file.read() + '\n')
-
-          print("Done merging summaries")
-          EOF
-
-      - name: Commit summaries
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add scrape_summary.txt failed_urls.txt
-          git stash
-          git pull --rebase origin main
-          git stash pop || true
-          git add scrape_summary.txt failed_urls.txt
-          git diff --staged --quiet || (
-            git commit -m "scrape summary $(date +'%Y-%m-%d')" &&
-            git push
-          )
