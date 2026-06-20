@@ -1,4 +1,20 @@
+=== air_beds_sleeping_bags ===
+Total Failed URLs: 0
+
+
+=== aquariums ===
+Total Failed URLs: 0
+
+
 === bikes ===
+Total Failed URLs: 0
+
+
+=== building_materials ===
+Total Failed URLs: 0
+
+
+=== business_industrial ===
 Total Failed URLs: 0
 
 
@@ -10,7 +26,79 @@ Total Failed URLs: 0
 Total Failed URLs: 0
 
 
+=== cashier_machines ===
+Total Failed URLs: 0
+
+
+=== elevators ===
+Total Failed URLs: 0
+
+
+=== escalator ===
+Total Failed URLs: 0
+
+
+=== fishing_equipment ===
+Total Failed URLs: 0
+
+
+=== generators ===
+Total Failed URLs: 0
+
+
+=== gift_items ===
+Total Failed URLs: 0
+
+
+=== glasses ===
+Total Failed URLs: 0
+
+
+=== inflatable_games ===
+Total Failed URLs: 0
+
+
+=== metal_detector ===
+Total Failed URLs: 0
+
+
+=== pet_accessories ===
+Total Failed URLs: 0
+
+
+=== porta_cabin ===
+Total Failed URLs: 0
+
+
+=== pumps ===
+Total Failed URLs: 0
+
+
+=== safe_boxes ===
+Total Failed URLs: 0
+
+
+=== shaving_hair_removal_products ===
+Total Failed URLs: 0
+
+
 === special_numbers-plate_numbers ===
+Total Failed URLs: 0
+
+
+=== stamps ===
+Total Failed URLs: 0
+
+
+=== tracking_systems ===
+Total Failed URLs: 0
+
+
+=== travel_accessories ===
+Total Failed URLs: 0
+
+
+=== walkie_talkie ===
 Total Failed URLs: 0
 
 
