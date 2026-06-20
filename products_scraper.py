@@ -162,7 +162,7 @@ def parse_product(page) -> dict:
     }
 
 
-def download_images(images: list, category: str = "", fmt: str = "PNG") -> list:
+def download_images(images: list, product_url: str = "", category: str = "", fmt: str = "PNG") -> list:
     r2_paths = []
     uploaded = 0
     failed = 0
@@ -174,8 +174,10 @@ def download_images(images: list, category: str = "", fmt: str = "PNG") -> list:
         ext = "png"
         content_type = "image/png"
 
-    for img_url in images:
-        original_name = img_url.split("/")[-1].rsplit(".", 1)[0]
+    slug = product_url.rstrip("/").split("/")[-1] if product_url else "unknown"
+
+    for idx, img_url in enumerate(images, start=1):
+        filename = f"{slug}-{idx}.{ext}"   
         try:
             r = req.get(img_url, timeout=15)
             if r.status_code == 200:
@@ -188,8 +190,8 @@ def download_images(images: list, category: str = "", fmt: str = "PNG") -> list:
                     img.save(output_buffer, format="PNG")
                 r2_key = upload_buffer(
                     output_buffer,
-                    filename=f"{original_name}.{ext}",
-                    category=category,       
+                    filename=filename,
+                    category=category,
                     file_type="images",
                     content_type=content_type
                 )
@@ -216,7 +218,9 @@ def scrape_single(url: str, category: str = "") -> dict:
             wait_for_idle_network_timeout=10000
         )
         data = parse_product(page)
-        data["images_local_paths"] = download_images(data.get("images", []), category=category)
+        data["images_local_paths"] = download_images(data.get("images", []),
+                                                     product_url=url,
+                                                     category=category)
         return data
     except Exception as e:
         print(f"  Error URL: {url} -> {e}")
