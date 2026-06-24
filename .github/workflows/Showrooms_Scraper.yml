@@ -157,7 +157,6 @@ jobs:
           print(f"Found {len(excel_files)} Excel files")
           print(f"Found {len(failed_files)} failed files")
 
-          # ✅ boto3 client أول حاجة
           dt     = datetime.now()
           bucket = os.environ['CF_R2_BUCKET_NAME']
           client = boto3.client('s3',
@@ -168,7 +167,7 @@ jobs:
           )
           base_key = f"qatarsale/year={dt.year}/month={dt.strftime('%m')}/day={dt.strftime('%d')}/showrooms_cars_for_sale"
 
-          # ✅ collect failed URLs أول
+          # collect failed URLs
           all_failed_urls = []
           for f in failed_files:
               try:
@@ -181,7 +180,8 @@ jobs:
                   print(f"Error reading {f}: {e}")
 
           # Merge Excel
-          success_sheets  = []
+          success_sheets   = []
+          empty_showrooms  = []
           failed_showrooms = []
 
           with pd.ExcelWriter('all_showrooms.xlsx', engine='openpyxl') as writer:
@@ -190,17 +190,34 @@ jobs:
                       base_name  = os.path.basename(f)
                       sheet_name = base_name.replace('showroom_', '').replace('.xlsx', '')[:31]
                       df = pd.read_excel(f, sheet_name=0)
+
+                      # ✅ تحقق لو empty
+                      if df.empty or len(df) == 0:
+                          empty_showrooms.append(sheet_name)
+                          print(f"  ⚠ EMPTY: {sheet_name}")
+                          continue
+
                       counter = 1
                       original_name = sheet_name
                       while sheet_name in writer.sheets:
                           sheet_name = f"{original_name}_{counter}"
                           counter += 1
+
                       df.to_excel(writer, sheet_name=sheet_name, index=False)
                       success_sheets.append({"name": sheet_name, "rows": len(df)})
                       print(f"  ✓ {sheet_name}: {len(df)} rows")
+
                   except Exception as e:
-                      failed_showrooms.append(os.path.basename(f))
-                      print(f"  ✗ {f}: {e}")
+                      sheet_name = os.path.basename(f).replace('showroom_', '').replace('.xlsx', '')[:31]
+                      failed_showrooms.append(sheet_name)
+                      print(f"  ✗ FAILED: {sheet_name} — {e}")
+
+          print(f"\n{'='*40}")
+          print(f"Total Excel files found:   {len(excel_files)}")
+          print(f"Total success:             {len(success_sheets)}")
+          print(f"Total empty:               {len(empty_showrooms)}")
+          print(f"Total failed to read:      {len(failed_showrooms)}")
+          print(f"Total failed product URLs: {len(all_failed_urls)}")
 
           # Upload Excel
           client.upload_file('all_showrooms.xlsx', bucket,
@@ -214,16 +231,25 @@ jobs:
               f.write(f"=== showrooms_cars_for_sale ===\n")
               f.write(f"Run Date: {dt.strftime('%Y-%m-%d %H:%M:%S')} UTC\n")
               f.write(f"Status: DONE\n\n")
-              f.write(f"Total Showrooms Scraped: {len(success_sheets)}\n")
-              f.write(f"Total Failed Showrooms: {len(failed_showrooms)}\n")
-              f.write(f"Total Failed URLs: {len(all_failed_urls)}\n\n")
+              f.write(f"Total Excel Files Found:   {len(excel_files)}\n")
+              f.write(f"Total Success:             {len(success_sheets)}\n")
+              f.write(f"Total Empty Showrooms:     {len(empty_showrooms)}\n")
+              f.write(f"Total Failed to Read:      {len(failed_showrooms)}\n")
+              f.write(f"Total Failed Product URLs: {len(all_failed_urls)}\n\n")
+
               f.write("--- Showrooms ---\n")
               for s in success_sheets:
-                  f.write(f"{s['name']}: {s['rows']} products\n")
+                  f.write(f"  {s['name']}: {s['rows']} products\n")
+
+              if empty_showrooms:
+                  f.write("\n--- Empty Showrooms ---\n")
+                  for s in empty_showrooms:
+                      f.write(f"  {s}\n")
+
               if failed_showrooms:
                   f.write("\n--- Failed Showrooms ---\n")
                   for s in failed_showrooms:
-                      f.write(f"{s}\n")
+                      f.write(f"  {s}\n")
 
           client.upload_file(summary_file, bucket,
               f"{base_key}/summary/scrape_summary.txt",
@@ -243,4 +269,5 @@ jobs:
           print(f"Uploaded: {base_key}/summary/failed_urls.txt")
 
           print("Done!")
+          
           EOF
