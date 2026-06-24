@@ -2,34 +2,32 @@ import json
 import os
 import pandas as pd
 
-def run(products_json: str, output_excel: str = None) -> dict:
+def run(input_json: str, output_csv: str):
     print("\n" + "="*50)
-    print("STEP 3: Flattening products...")
+    print("STEP 3: Flattening specifications JSON...")
     print("="*50)
 
-    if not os.path.exists(products_json):
-        print(f"No products file found ({products_json}).")
-        return {"rows": 0, "columns": 0, "df": pd.DataFrame()}
+    if not os.path.exists(input_json):
+        print(f"ERROR: '{input_json}' not found!")
+        return {"columns": 0}
 
     rows = []
-    with open(products_json, "r", encoding="utf-8") as f:
+    with open(input_json, "r", encoding="utf-8") as f:
         for line in f:
             try:
-                row = json.loads(line)
-                # Flatten lists to strings
-                row["phones"]    = ", ".join(row.get("phones", []))
-                row["whatsapps"] = ", ".join(row.get("whatsapps", []))
-                row["images"]    = ", ".join(row.get("images", []))
-                # Flatten specs
-                specs = row.pop("specifications", {}) or {}
-                for k, v in specs.items():
-                    row[f"spec_{k}"] = v
-                row.pop("images_local_paths", None)
-                rows.append(row)
+                rows.append(json.loads(line))
             except Exception:
                 pass
 
-    df = pd.DataFrame(rows)
-    print(f"Flattened {len(df)} rows, {len(df.columns)} columns")
+    if not rows:
+        print("ERROR: No data found in file!")
+        return {"columns": 0}
 
-    return {"rows": len(df), "columns": len(df.columns), "df": df}
+    df = pd.DataFrame(rows)
+    specs_expanded = pd.json_normalize(
+        df["specifications"].apply(lambda x: x if isinstance(x, dict) else {})
+    )
+    df = pd.concat([df, specs_expanded], axis=1)
+    df.to_csv(output_csv, index=False, encoding="utf-8-sig")
+    print(f"STEP 3 DONE: Saved to '{output_csv}' with {len(df.columns)} columns")
+    return {"columns": len(df.columns)}
