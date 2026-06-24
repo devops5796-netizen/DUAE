@@ -1,8 +1,8 @@
 name: QatarSale Categories Scraper
 
 on:
-  schedule:
-    - cron: '0 2 * * *'
+  repository_dispatch:
+    types: [sub_sub_categories-done]
   workflow_dispatch:
 
 jobs:
