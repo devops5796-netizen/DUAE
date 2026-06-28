@@ -87,7 +87,7 @@ def filter_yesterday_links(links_csv: str, filtered_csv: str) -> dict:
 def run_single_category(category: str, start: int, end: int):
     listing_url   = CATEGORIES[category]
     links_csv     = f"links_{category}_{start}_{end}.csv"
-    filtered_csv   = f"links_yesterday_{category}_{start}_{end}.csv"
+    filtered_csv  = f"links_yesterday_{category}_{start}_{end}.csv"
     products_json = f"products_{category}_{start}_{end}.jsonl"
     output_excel  = f"{category}_{start}_{end}.xlsx"
 
@@ -100,7 +100,7 @@ def run_single_category(category: str, start: int, end: int):
         print(f"⚠️ No links found — skipping.")
         return None
     
-    s_filter   = filter_yesterday_links(links_csv, filtered_csv)
+    """s_filter   = filter_yesterday_links(links_csv, filtered_csv)
     
     if s_filter["yesterday"] == 0:
         print("\n" + "="*60)
@@ -113,9 +113,9 @@ def run_single_category(category: str, start: int, end: int):
         seconds = int(elapsed % 60)
 
         print(f"Total Time: {minutes}m {seconds}s")
-        return
+        return"""
 
-    s2 = products_scraper.run(filtered_csv, products_json, workers=4, category=category)
+    s2 = products_scraper.run(links_csv, products_json, workers=4, category=category)
     if s2['success'] == 0:
         print(f"⚠️ No products scraped for '{category}' — skipping.")
         return None
