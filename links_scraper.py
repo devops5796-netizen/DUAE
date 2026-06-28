@@ -1,29 +1,55 @@
+import json
 import random
 import time
 import pandas as pd
 from scrapling import StealthyFetcher
-BASE_URL = "https://qatarsale.com"
 
-def extract_product_links(page) -> list:
-    product_links = []
-    
-    items = page.css("qs-product-card-v2 a[href*='/product/']")
-    
-    for it in items:
-        href = it.attrib.get("href", "")
-        if href:
-            if href.startswith("/"):
-                href = BASE_URL + href
-            product_links.append(href)
-    
-    return list(set(product_links))
+BASE_URL = "https://qatarsale.com"
+BASE_PRODUCT_URL = "https://qatarsale.com/ar/product"
+
+
+def extract_products_from_state(page, source_url: str) -> list:
+    rows = []
+    try:
+        script = page.find("script", {"id": "serverApp-state"})
+        if not script:
+            return []
+
+        raw = (script.text
+               .replace("&q;", '"')
+               .replace("&l;", "<")
+               .replace("&g;", ">")
+               .replace("&a;", "&")
+               .replace("&s;", "'"))
+
+        data = json.loads(raw)
+
+        if "ProductList" not in data:
+            return []
+
+        products  = data["ProductList"]["list"]
+        defs_meta = {str(d["id"]): d["label"] for d in data["ProductList"].get("defsMetaData", [])}
+
+        for product in products:
+            specs = {defs_meta[k]: v for k, v in product.get("definitions", {}).items() if k in defs_meta}
+            row   = {k: v for k, v in product.items() if k != "definitions"}
+            row.update(specs)
+            row["source_url"]  = source_url
+            row["product_url"] = f"{BASE_PRODUCT_URL}/{product.get('uri', '')}" if product.get("uri") else ""
+            rows.append(row)
+
+    except Exception as e:
+        print(f"  Error parsing state: {e}")
+
+    return rows
+
 
 def run(listing_url: str, start_page: int, end_page: int, output_csv: str):
     print("\n" + "="*50)
     print("STEP 1: Scraping listing pages for links...")
     print("="*50)
 
-    all_links = set()
+    all_rows     = []
     failed_pages = {}
     success_count = 0
 
@@ -41,19 +67,18 @@ def run(listing_url: str, start_page: int, end_page: int, output_csv: str):
                     wait_for_idle_network_timeout=10000
                 )
 
-                links = extract_product_links(page)
-                
-                if links:
-                    for l in links:
-                        all_links.add(l)
+                rows = extract_products_from_state(page, url)
+
+                if rows:
+                    all_rows.extend(rows)
                     success_count += 1
-                    print(f"  ✓ Found {len(links)} links")
+                    print(f"  ✓ Found {len(rows)} products")
                     break
                 else:
-                    failed_pages[f"Page {page_num}"] = "No links found"
-                    print(f"  ⚠ No links found")
+                    failed_pages[f"Page {page_num}"] = "No products found"
+                    print(f"  ⚠ No products found")
                     break
-      
+
             except Exception as e:
                 if attempt < 2:
                     print(f"  Attempt {attempt+1} failed, retrying...")
@@ -65,13 +90,21 @@ def run(listing_url: str, start_page: int, end_page: int, output_csv: str):
         if page_num < end_page:
             time.sleep(random.uniform(2.0, 5.0))
 
-    pd.DataFrame(list(all_links), columns=["product_url"]).to_csv(output_csv, index=False, encoding="utf-8")
+    df = pd.DataFrame(all_rows)
+    
+    # deduplicate
+    if "product_url" in df.columns:
+        df = df.drop_duplicates(subset=["product_url"], keep="first")
+
+    df.to_csv(output_csv, index=False, encoding="utf-8-sig")
+    print(f"  Saved {len(df)} products to {output_csv}")
 
     return {
-        "success": success_count,
-        "failed": len(failed_pages),
-        "total_links": len(all_links)
+        "success":      success_count,
+        "failed":       len(failed_pages),
+        "total_links":  len(df)
     }
+
 
 if __name__ == "__main__":
     result = run(

@@ -261,7 +261,7 @@ jobs:
           bucket = os.environ['CF_R2_BUCKET_NAME']
           base_key = f"qatarsale/year={dt.year}/month={dt.strftime('%m')}/day={dt.strftime('%d')}/{category}/summary"
 
-          # ✅ لو cars_for_rent — split by manufacturer
+
           if category == "cars_for_rent":
               subprocess.run(["pip", "install", "openpyxl"], check=True)
               subprocess.run(["python", "split_by_manufacturer.py", output_file, f"excel_by_manufacturer_{category}"], check=True)
@@ -304,6 +304,7 @@ jobs:
 
           # Failed URLs
           failed = []
+
           for f in glob.glob('excel_parts/*_failed.txt'):
               with open(f, 'r', encoding='utf-8') as file:
                   for line in file:
@@ -311,10 +312,20 @@ jobs:
                       if line.startswith('http'):
                           failed.append(line)
 
+          successful = sum(len(df) for df in all_sheets.values())
+
+          total_scraped = successful + len(failed)
+
+          failed_percentage = (
+              (len(failed) / total_scraped) * 100
+              if total_scraped > 0 else 0
+          )
+
           failed_file = f"failed_urls_{category}.txt"
           with open(failed_file, 'w', encoding='utf-8') as f:
               f.write(f"=== {category} ===\n")
               f.write(f"Total Failed URLs: {len(failed)}\n\n")
+              f.write(f"Failed URL Percentage: {failed_percentage:.2f}%\n")              
               for u in failed:
                   f.write(u + '\n')
 

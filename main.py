@@ -5,6 +5,8 @@ import products_scraper
 import flatten
 import excel_writer
 from detect_utils import get_last_page
+from datetime import datetime, timezone, timedelta
+import pandas as pd
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -63,10 +65,29 @@ CATEGORIES = {
         "https://qatarsale.com/ar/products/fishing_equipment?basic_search:StatusFilter=0",
 }
 
+def filter_yesterday_links(links_csv: str, filtered_csv: str) -> dict:
+    df = pd.read_csv(links_csv)
+    
+    if "startDate" not in df.columns:
+        print("⚠️ No startDate column found, using all links")
+        df.to_csv(filtered_csv, index=False, encoding="utf-8")
+        return {"total": len(df), "yesterday": len(df)}
+
+    df["date_parsed"] = pd.to_datetime(df["startDate"], format="ISO8601", utc=True)
+    yesterday = datetime.now(timezone.utc).date() - timedelta(days=1)
+    mask = df["date_parsed"].dt.date == yesterday
+    df_yesterday = df[mask].drop(columns=["date_parsed"])
+
+    print(f"  Total links:     {len(df)}")
+    print(f"  Yesterday links: {len(df_yesterday)}")
+
+    df_yesterday.to_csv(filtered_csv, index=False, encoding="utf-8")
+    return {"total": len(df), "yesterday": len(df_yesterday)}
 
 def run_single_category(category: str, start: int, end: int):
     listing_url   = CATEGORIES[category]
     links_csv     = f"links_{category}_{start}_{end}.csv"
+    filtered_csv   = f"links_yesterday_{category}_{start}_{end}.csv"
     products_json = f"products_{category}_{start}_{end}.jsonl"
     output_excel  = f"{category}_{start}_{end}.xlsx"
 
@@ -78,8 +99,27 @@ def run_single_category(category: str, start: int, end: int):
     if s1['total_links'] == 0:
         print(f"⚠️ No links found — skipping.")
         return None
+    
+    s_filter   = filter_yesterday_links(links_csv, filtered_csv)
+    
+    if s_filter["yesterday"] == 0:
+        print("\n" + "="*60)
+        print("No listings found for yesterday.")
+        print("Skipping product scraping and flattening.")
+        print("="*60)
 
-    s2 = s2 = products_scraper.run(links_csv, products_json, workers=4, category=category)
+        elapsed = time.time() - elapsed_start
+        minutes = int(elapsed // 60)
+        seconds = int(elapsed % 60)
+
+        print(f"Total Time: {minutes}m {seconds}s")
+        return
+
+    s2 = products_scraper.run(filtered_csv, products_json, workers=4, category=category)
+    if s2['success'] == 0:
+        print(f"⚠️ No products scraped for '{category}' — skipping.")
+        return None
+    
     s3 = flatten.run(products_json)
 
     df = s3["df"]
