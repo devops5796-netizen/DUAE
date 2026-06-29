@@ -1,0 +1,26 @@
+name: QatarSale Showrooms Scraper
+
+on:
+  workflow_run:
+    workflows: ["QatarSale Categories Scraper"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  scrape_cars_for_sale:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    uses: ./.github/workflows/Showrooms_Single_Category.yml
+    with:
+      category: cars_for_sale
+    secrets: inherit
+
+  scrape_cars_for_rent:
+    needs: scrape_cars_for_sale
+    if: always()
+    uses: ./.github/workflows/Showrooms_Single_Category.yml
+    with:
+      category: cars_for_rent
+    secrets: inherit

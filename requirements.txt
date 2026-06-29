@@ -1,0 +1,11 @@
+requests
+pandas
+beautifulsoup4
+playwright
+python-dotenv
+msgspec
+patchright
+boto3
+Pillow
+curl_cffi
+browserforge
