@@ -197,9 +197,9 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
                       upload_images: bool = True, image_workers: int = 8) -> dict:
     """
     Process category data and generate Excel/JSON files with the structure:
-    {city}/Motors/{category_display}/excel/...
-    {city}/Motors/{category_display}/json/...
-    {city}/Motors/{category_display}/summary/summary.txt
+    {city}/Motors/{category_name}/excel/...
+    {city}/Motors/{category_name}/json/...
+    {city}/Motors/{category_name}/summary/summary.txt
     """
     df = load_all_hits(jsonl_files)
     if df.empty:
@@ -223,20 +223,11 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
     # Group by city and main category (cat0)
     for (city, cat0), city_df in df.groupby(["_city", "_cat0"]):
         safe_city = sanitize_name(city)  # "Al Ain" -> "Al_Ain"
-        safe_cat0 = sanitize_name(cat0)
         
-        # Determine category display name (without spaces)
-        if category_name in CAR_CATEGORIES:
-            if "used" in category_name:
-                category_display = "Used_Cars"
-            elif "rental" in category_name:
-                category_display = "Rental_Cars"
-            else:
-                category_display = safe_cat0.replace("_", " ").title().replace(" ", "_")
-        else:
-            category_display = safe_cat0.replace("_", " ").title().replace(" ", "_")
+        # Use the category name as-is (used_cars, rental_cars, etc.)
+        category_display = category_name  # Keep original category name
         
-        # Create path: {city}/Motors/{category_display}
+        # Create path: {city}/Motors/{category_name}
         city_dir = os.path.join(output_base_dir, safe_city, "Motors", category_display)
         os.makedirs(city_dir, exist_ok=True)
         
@@ -263,7 +254,7 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
                 lambda n: n[3] if len(n) > 3 else "Unknown"
             )
 
-            # Save main file: excel/Used_Cars.xlsx
+            # Save main file: excel/{category_name}.xlsx
             main_xlsx = os.path.join(excel_dir, f"{category_display}.xlsx")
             main_json = os.path.join(json_dir, f"{category_display}.json")
             
