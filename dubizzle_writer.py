@@ -88,7 +88,7 @@ def load_all_hits(jsonl_files: list) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def download_images(images: list, slug: str = "", category: str = "", object_id: str = "", 
+def download_images(images: list, slug: str = "", category: str = "", id_prod: str = "", 
                     city: str = "", category_display: str = "") -> list:
     """Download and upload images to R2"""
     r2_paths = []
@@ -100,8 +100,8 @@ def download_images(images: list, slug: str = "", category: str = "", object_id:
 
     ext = "webp"
     slug = slug or "unknown"
-    # Use object_id for filename if available
-    file_prefix = object_id if object_id else slug
+    # Use id_prod for filename if available
+    file_prefix = id_prod if id_prod else slug
 
     for idx, img_url in enumerate(images, start=1):
         filename = f"{file_prefix}-{idx}.{ext}"  # id-1.webp, id-2.webp, etc.
@@ -149,12 +149,12 @@ def process_images_for_group(df: pd.DataFrame, category: str, city: str, categor
     n = len(df)
     results = [None] * n 
 
-    def worker(pos: int, images: list, slug: str, object_id: str) -> tuple:
+    def worker(pos: int, images: list, slug: str, id_prod: str) -> tuple:
         r2_paths = download_images(
             images, 
             slug=slug, 
             category=category, 
-            object_id=object_id,
+            id_prod=id_prod,
             city=city,
             category_display=category_display
         )
@@ -163,14 +163,14 @@ def process_images_for_group(df: pd.DataFrame, category: str, city: str, categor
     tasks = []
     for pos, (idx, row) in enumerate(df.iterrows()):
         images = row.get("photo_mains", [])
-        slug = str(row.get("objectID", idx))
-        object_id = str(row.get("objectID", idx))  # Use objectID as filename prefix
-        tasks.append((pos, images, slug, object_id))
+        id_prod = str(row.get("id", idx))
+        slug = id_prod
+        tasks.append((pos, images, slug, id_prod))
 
     print(f"  Downloading images for {n} products using {workers} workers...")
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = {executor.submit(worker, pos, images, slug, object_id): pos for pos, images, slug, object_id in tasks}
+        futures = {executor.submit(worker, pos, images, slug, id_prod): pos for pos, images, slug, id_prod in tasks}
 
         completed = 0
         for future in as_completed(futures):
@@ -227,8 +227,8 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
     df["_cat0"] = df["_names_en"].apply(lambda n: n[0] if len(n) > 0 else "Unknown")
     df["_cat1"] = df["_names_en"].apply(lambda n: n[1] if len(n) > 1 else "Unknown")
 
-    if "objectID" in df.columns:
-        df = df.drop_duplicates(subset=["objectID"], keep="first")
+    if "id" in df.columns:
+        df = df.drop_duplicates(subset=["id"], keep="first")
 
     excel_files = []
     json_files = []
