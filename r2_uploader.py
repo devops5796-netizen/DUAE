@@ -51,17 +51,34 @@ def build_r2_key(folder_name: str, category: str, file_type: str, filename: str,
 def upload_buffer(
     buffer: io.BytesIO,
     filename: str,
-    folder_name: str = "qatarsale",
+    folder_name: str = "Dubizzle_UAE",
     category: str = "",
     file_type: str = "images",
     content_type: str = "image/webp",
-    dt: datetime = None
+    dt: datetime = None,
+    city: str = "",
+    category_display: str = ""
 ) -> str | None:
+    """
+    Upload buffer to R2 with the structure:
+    Dubizzle_UAE/{date_prefix}/{city}/Motors/{category_display}/images/{filename}
+    """
     client = R2_CLIENT_INSTANCE if R2_CLIENT_INSTANCE else get_r2_client()
     if not client or not BUCKET_NAME:
         return None
 
-    r2_key = build_r2_key(folder_name, category, file_type, filename, dt)
+    # Build the full path
+    if dt is None:
+        dt = datetime.now()
+    
+    date_prefix = f"year={dt.year}/month={dt.strftime('%m')}/day={dt.strftime('%d')}"
+    
+    # Construct the R2 key with the new structure
+    if city and category_display:
+        r2_key = f"{folder_name}/{date_prefix}/{city}/Motors/{category_display}/{file_type}/{filename}"
+    else:
+        # Fallback to old structure if city/category_display not provided
+        r2_key = build_r2_key(folder_name, category, file_type, filename, dt)
 
     try:
         buffer.seek(0)

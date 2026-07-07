@@ -88,7 +88,8 @@ def load_all_hits(jsonl_files: list) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def download_images(images: list, slug: str = "", category: str = "") -> list:
+def download_images(images: list, slug: str = "", category: str = "", object_id: str = "", 
+                    city: str = "", category_display: str = "") -> list:
     """Download and upload images to R2"""
     r2_paths = []
     uploaded = 0
@@ -99,9 +100,11 @@ def download_images(images: list, slug: str = "", category: str = "") -> list:
 
     ext = "webp"
     slug = slug or "unknown"
+    # Use object_id for filename if available
+    file_prefix = object_id if object_id else slug
 
     for idx, img_url in enumerate(images, start=1):
-        filename = f"{slug}-{idx}.{ext}"
+        filename = f"{file_prefix}-{idx}.{ext}"  # id-1.webp, id-2.webp, etc.
         try:
             r = req.get(img_url, timeout=15)
             if r.status_code == 200:
@@ -111,12 +114,17 @@ def download_images(images: list, slug: str = "", category: str = "") -> list:
                 img.save(output_buffer, format="WEBP", quality=100, method=6)
                 output_buffer.seek(0)
 
+                # Upload to R2 with the new structure
                 r2_key = upload_buffer(
                     output_buffer,
                     filename=filename,
+                    folder_name="Dubizzle_UAE",
                     category=category,
                     file_type="images",
-                    content_type="image/webp"
+                    content_type="image/webp",
+                    dt=None,
+                    city=city,
+                    category_display=category_display
                 )
                 if r2_key:
                     r2_paths.append(r2_key)
@@ -126,34 +134,43 @@ def download_images(images: list, slug: str = "", category: str = "") -> list:
             else:
                 failed += 1
         except Exception as e:
-            print(f"    [ERROR] {slug} image {idx}: {e}")
+            print(f"    [ERROR] {filename} image {idx}: {e}")
             failed += 1
 
     if uploaded or failed:
-        print(f"    {slug}: {uploaded} uploaded, {failed} failed out of {len(images)}")
+        print(f"    {file_prefix}: {uploaded} uploaded, {failed} failed out of {len(images)}")
     return r2_paths
 
 
-def process_images_for_group(df: pd.DataFrame, category: str, workers: int = 8) -> pd.DataFrame:
+def process_images_for_group(df: pd.DataFrame, category: str, city: str, category_display: str, 
+                              workers: int = 8) -> pd.DataFrame:
     """Process images for a group of products using multithreading"""
     df = df.copy()
     n = len(df)
     results = [None] * n 
 
-    def worker(pos: int, images: list, slug: str) -> tuple:
-        r2_paths = download_images(images, slug=slug, category=category)
+    def worker(pos: int, images: list, slug: str, object_id: str) -> tuple:
+        r2_paths = download_images(
+            images, 
+            slug=slug, 
+            category=category, 
+            object_id=object_id,
+            city=city,
+            category_display=category_display
+        )
         return pos, r2_paths
 
     tasks = []
     for pos, (idx, row) in enumerate(df.iterrows()):
         images = row.get("photo_mains", [])
         slug = str(row.get("objectID", idx))
-        tasks.append((pos, images, slug))
+        object_id = str(row.get("objectID", idx))  # Use objectID as filename prefix
+        tasks.append((pos, images, slug, object_id))
 
     print(f"  Downloading images for {n} products using {workers} workers...")
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = {executor.submit(worker, pos, images, slug): pos for pos, images, slug in tasks}
+        futures = {executor.submit(worker, pos, images, slug, object_id): pos for pos, images, slug, object_id in tasks}
 
         completed = 0
         for future in as_completed(futures):
@@ -171,7 +188,6 @@ def process_images_for_group(df: pd.DataFrame, category: str, workers: int = 8) 
 
     df["images_r2_paths"] = results
     return df
-
 
 def _write_excel_and_json(sheets: dict, xlsx_path: str) -> tuple:
     """Write Excel and JSON files from sheets"""
@@ -199,6 +215,7 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
     Process category data and generate Excel/JSON files with the structure:
     {city}/Motors/{category_name}/excel/...
     {city}/Motors/{category_name}/json/...
+    {city}/Motors/{category_name}/images/...
     {city}/Motors/{category_name}/summary/summary.txt
     """
     df = load_all_hits(jsonl_files)
@@ -231,17 +248,25 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
         city_dir = os.path.join(output_base_dir, safe_city, "Motors", category_display)
         os.makedirs(city_dir, exist_ok=True)
         
-        # Process images if needed
+        # Process images if needed - pass city and category_display
         if upload_images and "photo_mains" in city_df.columns:
             print(f"  Processing images for {safe_city}/{category_display} ({len(city_df)} products)...")
-            city_df = process_images_for_group(city_df, category=category_name, workers=image_workers)
+            city_df = process_images_for_group(
+                city_df, 
+                category=category_name, 
+                city=safe_city,
+                category_display=category_display,
+                workers=image_workers
+            )
 
         # Create subdirectories
         excel_dir = os.path.join(city_dir, "excel")
         json_dir = os.path.join(city_dir, "json")
+        images_dir = os.path.join(city_dir, "images")
         summary_dir = os.path.join(city_dir, "summary")
         os.makedirs(excel_dir, exist_ok=True)
         os.makedirs(json_dir, exist_ok=True)
+        os.makedirs(images_dir, exist_ok=True)
         os.makedirs(summary_dir, exist_ok=True)
 
         # Process car categories (split by manufacturer)
