@@ -41,8 +41,12 @@ def get_category_names(category_v2_value) -> list:
 
 
 def sanitize_name(name: str) -> str:
-    """Sanitize name for file/folder names"""
-    return re.sub(r'[<>:"/\\|?*]', "_", str(name)).strip()
+    """Sanitize name for file/folder names - replace spaces with underscores"""
+    # Replace spaces and special characters with underscore
+    name = re.sub(r'[<>:"/\\|?*]', "_", str(name))
+    # Replace spaces with underscores
+    name = name.replace(" ", "_")
+    return name.strip()
 
 
 def extract_sheet_name(names_en: list) -> str:
@@ -67,18 +71,7 @@ def generate_data_quality_report(df: pd.DataFrame, total_rows: int) -> str:
         # Count missing values (NaN) and empty strings
         missing = df[col].isna().sum() + (df[col] == '').sum()
         pct = (missing / total_rows) * 100 if total_rows > 0 else 0
-        
-        # Format status based on percentage
-        if pct == 0:
-            status = "✓ Complete"
-        elif pct < 5:
-            status = "⚠ Minor gaps"
-        elif pct < 20:
-            status = "⚠ Moderate gaps"
-        else:
-            status = "✗ High gaps"
-        
-        report_lines.append(f'  {col}: {missing} empty ({pct:.2f}%) {status}')
+        report_lines.append(f'  {col}: {missing} empty ({pct:.2f}%)')
     
     return "\n".join(report_lines)
 
@@ -229,19 +222,19 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
 
     # Group by city and main category (cat0)
     for (city, cat0), city_df in df.groupby(["_city", "_cat0"]):
-        safe_city = sanitize_name(city)
+        safe_city = sanitize_name(city)  # "Al Ain" -> "Al_Ain"
         safe_cat0 = sanitize_name(cat0)
         
-        # Determine category display name
+        # Determine category display name (without spaces)
         if category_name in CAR_CATEGORIES:
             if "used" in category_name:
-                category_display = "Used Cars"
+                category_display = "Used_Cars"
             elif "rental" in category_name:
-                category_display = "Rental Cars"
+                category_display = "Rental_Cars"
             else:
-                category_display = safe_cat0.replace("_", " ").title()
+                category_display = safe_cat0.replace("_", " ").title().replace(" ", "_")
         else:
-            category_display = safe_cat0.replace("_", " ").title()
+            category_display = safe_cat0.replace("_", " ").title().replace(" ", "_")
         
         # Create path: {city}/Motors/{category_display}
         city_dir = os.path.join(output_base_dir, safe_city, "Motors", category_display)
@@ -270,7 +263,7 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
                 lambda n: n[3] if len(n) > 3 else "Unknown"
             )
 
-            # Save main file: excel/Used Cars.xlsx
+            # Save main file: excel/Used_Cars.xlsx
             main_xlsx = os.path.join(excel_dir, f"{category_display}.xlsx")
             main_json = os.path.join(json_dir, f"{category_display}.json")
             
@@ -278,7 +271,7 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
             for manufacturer, m_df in city_df.groupby("_manufacturer"):
                 cols_to_drop = ["_manufacturer", "_model", "_city", "_cat0", "_cat1"]
                 m_df_clean = m_df.drop(columns=[c for c in cols_to_drop if c in m_df.columns])
-                safe_mfr = sanitize_name(manufacturer)[:31]
+                safe_mfr = sanitize_name(manufacturer)
                 sheets[safe_mfr] = m_df_clean
             
             xlsx_path, json_path = _write_excel_and_json(sheets, main_xlsx)
