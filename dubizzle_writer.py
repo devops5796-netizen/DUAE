@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from r2_uploader import upload_buffer
 from datetime import datetime
 
-CAR_CATEGORIES = {"motors_used_cars", "motors_rental_cars"}
+CAR_CATEGORIES = {"used_cars", "new_cars", "export_cars", "rental_cars"}
 
 
 def parse_dict_field(value):

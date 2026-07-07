@@ -13,31 +13,39 @@ PARAMS = {
 }
 
 CATEGORIES = {
-    "motors_used_cars": {
+    "used_cars": {
         "index": "by_added_desc_motors.com",
         "filter": '("category_v2.slug_paths":"motors/used-cars")',
     },
-    "motors_rental_cars": {
+    "new_cars": {
+        "index": "by_added_desc_motors.com",
+        "filter": '("category_v2.slug_paths":"motors/used-cars") AND ("car_condition":"new")',
+    },
+    "export_cars": {
+        "index": "by_added_desc_motors.com",
+        "filter": '("category_v2.slug_paths":"motors/used-cars") AND ("is_export_car": True)',
+    },
+    "rental_cars": {
         "index": "by_added_desc_rental-cars.com",
         "filter": '("category_v2.slug_paths":"motors/rental-cars")',
     },
-    "motors_motorcycles": {
+    "motorcycles": {
         "index": "by_added_desc_motors.com",
         "filter": '("category_v2.slug_paths":"motors/motorcycles")',
     },
-    "motors_auto_accessories_parts": {
+    "auto_accessories_parts": {
         "index": "by_added_desc_motors.com",
         "filter": '("category_v2.slug_paths":"motors/auto-accessories-parts")',
     },
-    "motors_heavy_vehicles": {
+    "heavy_vehicles": {
         "index": "by_added_desc_motors.com",
         "filter": '("category_v2.slug_paths":"motors/heavy-vehicles")',
     },
-    "motors_boats": {
+    "boats": {
         "index": "by_added_desc_motors.com",
         "filter": '("category_v2.slug_paths":"motors/boats")',
     },
-    "motors_number_plates": {
+    "number_plates": {
         "index": "by_added_desc_motors.com",
         "filter": '("category_v2.slug_paths":"motors/number-plates")',
     },
