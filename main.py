@@ -2,6 +2,7 @@ import sys
 import json
 import time
 import requests
+import random
 from datetime import datetime
 
 URL = "https://wd0ptz13zs-dsn.algolia.net/1/indexes/*/queries"
@@ -118,7 +119,9 @@ def run(category_name: str, start_page: int, end_page: int, output_jsonl: str) -
                 break
 
             hits.extend(page_hits)
-            time.sleep(0.3)  # Delay between requests
+            delay = random.uniform(0.5, 2.5)
+            print(f"  Waiting {delay:.2f}s before next request...")
+            time.sleep(delay)
             
         except Exception as e:
             print(f"  [ERROR] Page {page} data processing failed: {e}")

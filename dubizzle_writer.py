@@ -143,7 +143,7 @@ def download_images(images: list, slug: str = "", category: str = "", id_prod: s
 
 
 def process_images_for_group(df: pd.DataFrame, category: str, city: str, category_display: str, 
-                              workers: int = 8) -> pd.DataFrame:
+                              workers: int = 4) -> pd.DataFrame:
     """Process images for a group of products using multithreading"""
     df = df.copy()
     n = len(df)
