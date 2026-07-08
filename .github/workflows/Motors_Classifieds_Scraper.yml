@@ -275,17 +275,16 @@ jobs:
           for local_path in result["excel_files"]:
               relative_path = os.path.relpath(local_path, output_base)
               parts = relative_path.split(os.sep)
-              if len(parts) >= 4:  # city/Motors/category_display/excel/...
+              # parts شكلها: [city, cat0, cat1, "excel", ...remaining]
+              if len(parts) >= 4:
                   city = parts[0]
-                  category_display = parts[2]
-                  remaining_path = '/'.join(parts[4:]) if len(parts) > 4 else ""
-                  if remaining_path:
-                      r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/Motors/{category_display}/excel/{remaining_path}"
-                  else:
-                      r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/Motors/{category_display}/excel/{parts[3]}"
+                  cat0 = parts[1]
+                  cat1 = parts[2]
+                  remaining_path = '/'.join(parts[4:]) if len(parts) > 4 else parts[3]
+                  r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/{cat0}/{cat1}/excel/{remaining_path}"
               else:
                   r2_key = f"Dubizzle_UAE/{date_prefix}/{relative_path}"
-              
+
               client.upload_file(local_path, bucket, r2_key,
                   ExtraArgs={'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
               print(f"Uploaded Excel: {r2_key}")
@@ -296,20 +295,18 @@ jobs:
               parts = relative_path.split(os.sep)
               if len(parts) >= 4:
                   city = parts[0]
-                  category_display = parts[2]
-                  remaining_path = '/'.join(parts[4:]) if len(parts) > 4 else ""
-                  if remaining_path:
-                      r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/Motors/{category_display}/json/{remaining_path}"
-                  else:
-                      r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/Motors/{category_display}/json/{parts[3]}"
+                  cat0 = parts[1]
+                  cat1 = parts[2]
+                  remaining_path = '/'.join(parts[4:]) if len(parts) > 4 else parts[3]
+                  r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/{cat0}/{cat1}/json/{remaining_path}"
               else:
                   r2_key = f"Dubizzle_UAE/{date_prefix}/{relative_path}"
-              
+
               client.upload_file(local_path, bucket, r2_key,
                   ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
               print(f"Uploaded JSON: {r2_key}")
 
-          # Upload summary.txt for each category
+          # Upload summary.txt files
           for root, dirs, files in os.walk('output'):
               for file in files:
                   if file == 'summary.txt':
@@ -318,52 +315,65 @@ jobs:
                       parts = relative_path.split(os.sep)
                       if len(parts) >= 4:
                           city = parts[0]
-                          category_display = parts[2]
-                          r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/Motors/{category_display}/summary/summary.txt"
+                          cat0 = parts[1]
+                          cat1 = parts[2]
+                          r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/{cat0}/{cat1}/summary/summary.txt"
                           client.upload_file(local_path, bucket, r2_key,
                               ExtraArgs={'ContentType': 'text/plain; charset=utf-8'})
                           print(f"Uploaded summary: {r2_key}")
 
-          # Create and upload failed_{category}.txt - unique key لكل كاتيجوري
-          failed_file = f"failed_{category}.txt"
-          with open(failed_file, "w", encoding="utf-8") as f:
-              f.write(f"=== {category} ===\n")
-              f.write(f"Total Pages Attempted: {total_pages}\n")
-              f.write(f"Total Failed Pages: {len(failed_pages)}\n")
-              f.write(f"Failed Percentage: {failed_percentage:.2f}%\n")
-              f.write(f"Success Rate: {100 - failed_percentage:.2f}%\n")
-              f.write("\n" + "="*50 + "\n")
-              f.write("Failed Pages Details:\n")
-              f.write("="*50 + "\n")
 
-              if failed_pages:
-                  failed_pages.sort()
-                  f.write(f"Pages: {', '.join(map(str, failed_pages))}\n")
+          failed_content_lines = []
+          failed_content_lines.append(f"=== {category} ===\n")
+          failed_content_lines.append(f"Total Pages Attempted: {total_pages}\n")
+          failed_content_lines.append(f"Total Failed Pages: {len(failed_pages)}\n")
+          failed_content_lines.append(f"Failed Percentage: {failed_percentage:.2f}%\n")
+          failed_content_lines.append(f"Success Rate: {100 - failed_percentage:.2f}%\n")
+          failed_content_lines.append("\n" + "="*50 + "\n")
+          failed_content_lines.append("Failed Pages Details:\n")
+          failed_content_lines.append("="*50 + "\n")
 
-                  f.write("\nFailure Distribution:\n")
-                  consecutive_groups = []
-                  current_group = [failed_pages[0]]
+          if failed_pages:
+              failed_pages.sort()
+              failed_content_lines.append(f"Pages: {', '.join(map(str, failed_pages))}\n")
+              failed_content_lines.append("\nFailure Distribution:\n")
 
-                  for i in range(1, len(failed_pages)):
-                      if failed_pages[i] == failed_pages[i-1] + 1:
-                          current_group.append(failed_pages[i])
-                      else:
-                          consecutive_groups.append(current_group)
-                          current_group = [failed_pages[i]]
-                  consecutive_groups.append(current_group)
+              consecutive_groups = []
+              current_group = [failed_pages[0]]
+              for i in range(1, len(failed_pages)):
+                  if failed_pages[i] == failed_pages[i-1] + 1:
+                      current_group.append(failed_pages[i])
+                  else:
+                      consecutive_groups.append(current_group)
+                      current_group = [failed_pages[i]]
+              consecutive_groups.append(current_group)
 
-                  for group in consecutive_groups:
-                      if len(group) == 1:
-                          f.write(f"  Page {group[0]}\n")
-                      else:
-                          f.write(f"  Pages {group[0]}-{group[-1]} (consecutive {len(group)} pages)\n")
-              else:
-                  f.write("No failed pages! All pages scraped successfully.\n")
+              for group in consecutive_groups:
+                  if len(group) == 1:
+                      failed_content_lines.append(f"  Page {group[0]}\n")
+                  else:
+                      failed_content_lines.append(f"  Pages {group[0]}-{group[-1]} (consecutive {len(group)} pages)\n")
+          else:
+              failed_content_lines.append("No failed pages! All pages scraped successfully.\n")
 
-          r2_key = f"Dubizzle_UAE/{date_prefix}/{category}/summary/failed_pages_{category}.txt"
-          client.upload_file(failed_file, bucket, r2_key,
-              ExtraArgs={'ContentType': 'text/plain; charset=utf-8'})
-          print(f"Uploaded: {r2_key}")
+          failed_content = "".join(failed_content_lines)
+          local_failed_file = f"failed_{category}.txt"
+          with open(local_failed_file, "w", encoding="utf-8") as f:
+              f.write(failed_content)
+
+          summary_groups = set()
+          for local_path in result["excel_files"]:
+              relative_path = os.path.relpath(local_path, output_base)
+              parts = relative_path.split(os.sep)
+              if len(parts) >= 3:
+                  city, cat0, cat1 = parts[0], parts[1], parts[2]
+                  summary_groups.add((city, cat0, cat1))
+
+          for city, cat0, cat1 in summary_groups:
+              r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/{cat0}/{cat1}/summary/failed_pages_{category}.txt"
+              client.upload_file(local_failed_file, bucket, r2_key,
+                  ExtraArgs={'ContentType': 'text/plain; charset=utf-8'})
+              print(f"Uploaded: {r2_key}")
 
           print(f"\nDONE: {len(result['excel_files'])} excel + {len(result['json_files'])} json files uploaded for {category}")
           EOF
