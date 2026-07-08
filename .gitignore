@@ -3,18 +3,10 @@ __pycache__/
 db_uae_property.py
 db_uae_community.py
 db_uae_classified.py
-
 db_uae_motors.py
 db_uae_jobs.py
 
 categories_pages.csv
-motors_used_cars.csv
-motors_rental_cars.csv
-motors_number_plates.csv
-motors_motorcycles.csv
-motors_heavy_vehicles.csv
-motors_boats.csv
-motors_auto_accessories_parts.csv
 
 README.md
 try.py

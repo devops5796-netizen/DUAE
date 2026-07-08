@@ -131,7 +131,7 @@ def download_images(images: list, slug: str = "", category: str = "", id_prod: s
 
 
 def process_images_for_group(df: pd.DataFrame, category: str, city: str, cat0: str, cat1: str,
-                              workers: int = 4) -> pd.DataFrame:
+                              workers: int = 3) -> pd.DataFrame:
     df = df.copy()
     n = len(df)
     results = [None] * n
@@ -193,7 +193,7 @@ def _write_excel_and_json(sheets: dict, xlsx_path: str) -> tuple:
 
 
 def process_category(category_name: str, jsonl_files: list, output_base_dir: str,
-                      upload_images: bool = True, image_workers: int = 4) -> dict:
+                      upload_images: bool = True, image_workers: int = 3) -> dict:
     df = load_all_hits(jsonl_files)
     if df.empty:
         return {"total": 0, "excel_files": [], "json_files": []}

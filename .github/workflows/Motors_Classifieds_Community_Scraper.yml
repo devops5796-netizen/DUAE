@@ -100,7 +100,7 @@ jobs:
                   r = requests.post(URL, params=PARAMS, json=payload, timeout=30)
                   data = r.json()
                   nb_pages = data["results"][0]["nbPages"]
-                  nb_pages = 3
+                  #nb_pages = 3
                   print(f"  {category_name}: {nb_pages} pages")
               except Exception as e:
                   print(f"  Failed: {e}")
@@ -129,6 +129,7 @@ jobs:
     needs: detect_pages
     strategy:
       matrix: ${{ fromJson(needs.detect_pages.outputs.matrix) }}
+      max-parallel: 10
       fail-fast: false
 
     steps:
@@ -162,6 +163,7 @@ jobs:
     needs: scrape
 
     strategy:
+      max-parallel: 8
       matrix:
         category:
           - used_cars
@@ -302,7 +304,6 @@ jobs:
           for local_path in result["excel_files"]:
               relative_path = os.path.relpath(local_path, output_base)
               parts = relative_path.split(os.sep)
-              # parts شكلها: [city, cat0, cat1, "excel", ...remaining]
               if len(parts) >= 4:
                   city = parts[0]
                   cat0 = parts[1]
