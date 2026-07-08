@@ -133,6 +133,68 @@ CATEGORIES = {
         "index": "by_added_desc_classified.com",
         "filter": '("category_v2.slug_paths":"classified/furniture-home-garden")',
     },
+
+    # ── Community ──
+    "auto_services": {
+        "index": "by_added_desc_community.com",
+        "filter": '("category_v2.slug_paths":"community/auto-services")',
+        "hits": []
+    },
+    "consultancy_services": {
+        "index": "by_added_desc_community.com",
+        "filter": '("category_v2.slug_paths":"community/consultancy-services")',
+        "hits": []
+    },
+    "domestic": {
+        "index": "by_added_desc_community.com",
+        "filter": '("category_v2.slug_paths":"community/domestic")',
+        "hits": []
+    },
+    "event_entertainment": {
+        "index": "by_added_desc_community.com",
+        "filter": '("category_v2.slug_paths":"community/event-entertainment")',
+        "hits": []
+    },
+    "freelancers": {
+        "index": "by_added_desc_community.com",
+        "filter": '("category_v2.slug_paths":"community/freelancers")',
+        "hits": []
+    },
+    "health_wellbeing_services": {
+        "index": "by_added_desc_community.com",
+        "filter": '("category_v2.slug_paths":"community/health-wellbeing-services")',
+        "hits": []
+    },
+    "home_maintenance": {
+        "index": "by_added_desc_community.com",
+        "filter": '("category_v2.slug_paths":"community/home-maintenance")',
+        "hits": []
+    },
+    "movers_removals": {
+        "index": "by_added_desc_community.com",
+        "filter": '("category_v2.slug_paths":"community/movers-removals")',
+        "hits": []
+    },
+    "other_services": {
+        "index": "by_added_desc_community.com",
+        "filter": '("category_v2.slug_paths":"community/other-services")',
+        "hits": []
+    },
+    "restoration_repairs": {
+        "index": "by_added_desc_community.com",
+        "filter": '("category_v2.slug_paths":"community/restoration-repairs")',
+        "hits": []
+    },
+    "tutors_classes": {
+        "index": "by_added_desc_community.com",
+        "filter": '("category_v2.slug_paths":"community/tutors-classes")',
+        "hits": []
+    },
+    "web_computer_services": {
+        "index": "by_added_desc_community.com",
+        "filter": '("category_v2.slug_paths":"community/web-computer-services")',
+        "hits": []
+    },
 }
 
 

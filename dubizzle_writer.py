@@ -44,15 +44,15 @@ def sanitize_name(name: str) -> str:
 
 
 def extract_sheet_name(names_en: list) -> str:
-    if not names_en or len(names_en) < 3:
+    if not names_en:
         return "Other"
-
+    if len(names_en) == 2:
+        return names_en[1]
+    
     level2 = names_en[2]
-
     if len(names_en) >= 4:
         level3 = names_en[3]
         return f"{level2} ({level3})"
-
     return level2
 
 
