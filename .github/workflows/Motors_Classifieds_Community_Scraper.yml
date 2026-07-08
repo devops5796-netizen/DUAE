@@ -241,7 +241,7 @@ jobs:
           import boto3
           import re
           from datetime import datetime
-          from dubizzle_writer import process_category
+          from dub_writer import process_category
 
           category = "${{ matrix.category }}"
           jsonl_files = glob.glob('raw_parts/*.jsonl')
@@ -260,7 +260,7 @@ jobs:
           if not jsonl_files:
               print(f"No raw data found for {category}")
               # Upload empty summary
-              r2_key = f"Dubizzle_UAE/{date_prefix}/{category}/summary/summary.txt"
+              r2_key = f"DUAE/{date_prefix}/{category}/summary/summary.txt"
               summary_content = f"=== {category} ===\nStatus: NO DATA\nDate: {dt.strftime('%Y-%m-%d %H:%M:%S')}"
               client.put_object(Bucket=bucket, Key=r2_key, Body=summary_content.encode('utf-8'), 
                                ContentType='text/plain; charset=utf-8')
@@ -309,9 +309,9 @@ jobs:
                   cat0 = parts[1]
                   cat1 = parts[2]
                   remaining_path = '/'.join(parts[4:]) if len(parts) > 4 else parts[3]
-                  r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/{cat0}/{cat1}/excel/{remaining_path}"
+                  r2_key = f"DUAE/{date_prefix}/{city}/{cat0}/{cat1}/excel/{remaining_path}"
               else:
-                  r2_key = f"Dubizzle_UAE/{date_prefix}/{relative_path}"
+                  r2_key = f"DUAE/{date_prefix}/{relative_path}"
 
               client.upload_file(local_path, bucket, r2_key,
                   ExtraArgs={'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
@@ -326,9 +326,9 @@ jobs:
                   cat0 = parts[1]
                   cat1 = parts[2]
                   remaining_path = '/'.join(parts[4:]) if len(parts) > 4 else parts[3]
-                  r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/{cat0}/{cat1}/json/{remaining_path}"
+                  r2_key = f"DUAE/{date_prefix}/{city}/{cat0}/{cat1}/json/{remaining_path}"
               else:
-                  r2_key = f"Dubizzle_UAE/{date_prefix}/{relative_path}"
+                  r2_key = f"DUAE/{date_prefix}/{relative_path}"
 
               client.upload_file(local_path, bucket, r2_key,
                   ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
@@ -345,7 +345,7 @@ jobs:
                           city = parts[0]
                           cat0 = parts[1]
                           cat1 = parts[2]
-                          r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/{cat0}/{cat1}/summary/summary.txt"
+                          r2_key = f"DUAE/{date_prefix}/{city}/{cat0}/{cat1}/summary/summary.txt"
                           client.upload_file(local_path, bucket, r2_key,
                               ExtraArgs={'ContentType': 'text/plain; charset=utf-8'})
                           print(f"Uploaded summary: {r2_key}")
@@ -398,7 +398,7 @@ jobs:
                   summary_groups.add((city, cat0, cat1))
 
           for city, cat0, cat1 in summary_groups:
-              r2_key = f"Dubizzle_UAE/{date_prefix}/{city}/{cat0}/{cat1}/summary/failed_pages_{category}.txt"
+              r2_key = f"DUAE/{date_prefix}/{city}/{cat0}/{cat1}/summary/failed_pages_{category}.txt"
               client.upload_file(local_failed_file, bucket, r2_key,
                   ExtraArgs={'ContentType': 'text/plain; charset=utf-8'})
               print(f"Uploaded: {r2_key}")

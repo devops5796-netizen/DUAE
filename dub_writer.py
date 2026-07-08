@@ -106,7 +106,7 @@ def download_images(images: list, slug: str = "", category: str = "", id_prod: s
                 r2_key = upload_buffer(
                     output_buffer,
                     filename=filename,
-                    folder_name="Dubizzle_UAE",
+                    folder_name="DUAE",
                     category=category,
                     file_type="images",
                     content_type="image/webp",
