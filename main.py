@@ -14,17 +14,10 @@ PARAMS = {
 }
 
 CATEGORIES = {
+    # ── Motors ──
     "used_cars": {
         "index": "by_added_desc_motors.com",
         "filter": '("category_v2.slug_paths":"motors/used-cars")',
-    },
-    "new_cars": {
-        "index": "by_added_desc_motors.com",
-        "filter": '("category_v2.slug_paths":"motors/used-cars") AND ("car_condition":"new")',
-    },
-    "export_cars": {
-        "index": "by_added_desc_motors.com",
-        "filter": '("category_v2.slug_paths":"motors/used-cars") AND ("is_export_car": True)',
     },
     "rental_cars": {
         "index": "by_added_desc_rental-cars.com",
@@ -50,14 +43,100 @@ CATEGORIES = {
         "index": "by_added_desc_motors.com",
         "filter": '("category_v2.slug_paths":"motors/number-plates")',
     },
+
+    # ── Classifieds ──
+    "electronics": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/electronics")',
+    },
+    "computers_networking": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/computers-networking")',
+    },
+    "business_industrial": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/business-industrial")',
+    },
+    "home_appliances": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/home-appliances")',
+    },
+    "sports_equipment": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/sports-equipment")',
+    },
+    "clothing_accessories": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/clothing-accessories")',
+    },
+    "cameras_imaging": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/cameras-imaging")',
+    },
+    "jewelry_watches": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/jewelry-watches")',
+    },
+    "pets": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/pets")',
+    },
+    "musical_instruments": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/musical-instruments")',
+    },
+    "gaming": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/gaming")',
+    },
+    "baby_items": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/baby-items")',
+    },
+    "toys": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/toys")',
+    },
+    "tickets_vouchers": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/tickets-vouchers")',
+    },
+    "collectibles": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/collectibles")',
+    },
+    "books": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/books")',
+    },
+    "music": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/music")',
+    },
+    "free_stuff": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/free-stuff")',
+    },
+    "lostfound": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/lostfound")',
+    },
+    "dvds_movies": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/dvds-movies")',
+    },
+    "mobile_phones_pdas": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/mobile-phones-pdas")',
+    },
+    "furniture_home_garden": {
+        "index": "by_added_desc_classified.com",
+        "filter": '("category_v2.slug_paths":"classified/furniture-home-garden")',
+    },
 }
 
 
 def get_page_with_retry(category: dict, page: int, max_retries: int = 3) -> dict:
-    """
-    Fetch a page with retry mechanism (3 attempts)
-    Returns: dict or None if all attempts fail
-    """
     payload = {
         "requests": [{
             "indexName": category["index"],
@@ -65,7 +144,7 @@ def get_page_with_retry(category: dict, page: int, max_retries: int = 3) -> dict
             "params": f"page={page}&hitsPerPage=25&filters={category['filter']}",
         }]
     }
-    
+
     for attempt in range(1, max_retries + 1):
         try:
             r = requests.post(URL, params=PARAMS, json=payload, timeout=30)
@@ -74,18 +153,14 @@ def get_page_with_retry(category: dict, page: int, max_retries: int = 3) -> dict
         except Exception as e:
             print(f"  [Attempt {attempt}/{max_retries}] Page {page} failed: {e}")
             if attempt < max_retries:
-                wait_time = attempt * 2  # 2, 4, 6 seconds
+                wait_time = attempt * 2
                 print(f"  Waiting {wait_time}s before retry...")
                 time.sleep(wait_time)
-    
-    # All attempts failed
+
     return None
 
 
 def run(category_name: str, start_page: int, end_page: int, output_jsonl: str) -> dict:
-    """
-    Run scraper for a specific category and page range
-    """
     if category_name not in CATEGORIES:
         print(f"Unknown category: {category_name}")
         return {"success": 0, "failed": 0, "failed_pages": [], "total_pages": 0}
@@ -99,17 +174,14 @@ def run(category_name: str, start_page: int, end_page: int, output_jsonl: str) -
 
     for page in range(start_page, end_page + 1):
         print(f"  Processing page {page}...")
-        
-        # Try to get page with retry (3 attempts)
+
         data = get_page_with_retry(category, page, max_retries=3)
-        
+
         if data is None:
-            # All 3 attempts failed
             print(f"  [FAILED] Page {page} failed after 3 attempts, skipping...")
             failed_pages.append(page)
-            continue  # Continue to next page
-        
-        # Success - process the data
+            continue
+
         try:
             page_hits = data["results"][0]["hits"]
             print(f"  Page {page}: {len(page_hits)} listings")
@@ -122,17 +194,15 @@ def run(category_name: str, start_page: int, end_page: int, output_jsonl: str) -
             delay = random.uniform(0.5, 2.5)
             print(f"  Waiting {delay:.2f}s before next request...")
             time.sleep(delay)
-            
+
         except Exception as e:
             print(f"  [ERROR] Page {page} data processing failed: {e}")
             failed_pages.append(page)
 
-    # Save data
     with open(output_jsonl, "w", encoding="utf-8") as f:
         for hit in hits:
             f.write(json.dumps(hit, ensure_ascii=False) + "\n")
 
-    # Save failed pages
     if failed_pages:
         failed_file = output_jsonl.replace(".jsonl", "_failed.txt")
         with open(failed_file, "w", encoding="utf-8") as f:
@@ -144,9 +214,9 @@ def run(category_name: str, start_page: int, end_page: int, output_jsonl: str) -
                 f.write(f"page={p}\n")
 
     print(f"Saved {len(hits)} listings to {output_jsonl} | {len(failed_pages)} failed pages")
-    
+
     return {
-        "success": len(hits), 
+        "success": len(hits),
         "failed": len(failed_pages),
         "failed_pages": failed_pages,
         "total_pages": total_pages
@@ -160,8 +230,7 @@ if __name__ == "__main__":
         end = int(sys.argv[3])
         output = f"{category_name}_{start}_{end}.jsonl"
         result = run(category_name, start, end, output)
-        
-        # Save results as JSON
+
         result_file = f"{category_name}_{start}_{end}_result.json"
         with open(result_file, "w", encoding="utf-8") as f:
             json.dump({
