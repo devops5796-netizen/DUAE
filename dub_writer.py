@@ -11,7 +11,9 @@ from r2_uploader import upload_buffer
 from datetime import datetime
 
 CAR_CATEGORIES = {"used_cars", "rental_cars"}
-
+CONDITION_FIELD = "car_condition"     
+EXPORT_FIELD = "is_export_car" 
+NEW_VALUE = "new"
 
 def parse_dict_field(value):
     if isinstance(value, dict):
@@ -192,23 +194,49 @@ def _write_excel_and_json(sheets: dict, xlsx_path: str) -> tuple:
     return xlsx_path, json_path
 
 
-def process_category(category_name: str, jsonl_files: list, output_base_dir: str,
-                      upload_images: bool = True, image_workers: int = 3) -> dict:
-    df = load_all_hits(jsonl_files)
-    if df.empty:
-        return {"total": 0, "excel_files": [], "json_files": []}
+def split_used_cars(df: pd.DataFrame) -> dict:
+    if CONDITION_FIELD not in df.columns:
+        print(f"  ⚠️ Column '{CONDITION_FIELD}' not found, skipping split.")
+        return {"used_cars": df}
+    if EXPORT_FIELD not in df.columns:
+        print(f"  ⚠️ Column '{EXPORT_FIELD}' not found, skipping split.")
+        return {"used_cars": df}
 
+    is_new = df[CONDITION_FIELD] == NEW_VALUE
+    is_export = df[EXPORT_FIELD] == True
+
+    new_cars_df = df[is_new].copy()
+    export_cars_df = df[is_export].copy()
+    used_cars_df = df[~is_new & ~is_export].copy()
+
+    overlap = (is_new & is_export).sum()
+
+    print(f"  Split used_cars: new={len(new_cars_df)}, export={len(export_cars_df)}, "
+          f"used={len(used_cars_df)}, overlap(new+export)={overlap}")
+
+    return {
+        "new_cars": new_cars_df,
+        "export_cars": export_cars_df,
+        "used_cars": used_cars_df,
+    }
+
+def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: str,
+                        upload_images: bool, image_workers: int) -> dict:
+    if df.empty:
+        return {"excel_files": [], "json_files": []}
+
+    df = df.copy()
     df["_city"] = df["site"].apply(get_city_name)
     df["_names_en"] = df["category_v2"].apply(get_category_names)
     df["_cat0"] = df["_names_en"].apply(lambda n: n[0] if len(n) > 0 else "Unknown")
-    df["_cat1"] = df["_names_en"].apply(lambda n: n[1] if len(n) > 1 else "Unknown")
+
+    df["_cat1"] = category_name
 
     if "id" in df.columns:
         df = df.drop_duplicates(subset=["id"], keep="first")
 
     excel_files = []
     json_files = []
-    total = len(df)
 
     for (city, cat0, cat1), group_df in df.groupby(["_city", "_cat0", "_cat1"]):
         safe_city = sanitize_name(city)
@@ -234,7 +262,9 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
         os.makedirs(json_dir, exist_ok=True)
         os.makedirs(summary_dir, exist_ok=True)
 
-        if category_name in CAR_CATEGORIES:
+        is_car_split = category_name in CAR_CATEGORIES or category_name in {"new_cars", "export_cars", "used_cars"}
+
+        if is_car_split:
             group_df = group_df.copy()
             group_df["_manufacturer"] = group_df["category_v2"].apply(get_category_names).apply(
                 lambda n: n[2] if len(n) > 2 else "Unknown"
@@ -304,5 +334,39 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
             f.write(group_quality_report)
 
         print(f"  Saved summary: {summary_file_path}")
+
+    return {"excel_files": excel_files, "json_files": json_files}
+
+
+def process_category(category_name: str, jsonl_files: list, output_base_dir: str,
+                      upload_images: bool = True, image_workers: int = 3,
+                      city_filter: str = None) -> dict:
+    df = load_all_hits(jsonl_files)
+    if df.empty:
+        return {"total": 0, "excel_files": [], "json_files": []}
+
+    if city_filter:
+        df["_city_check"] = df["site"].apply(get_city_name)
+        df = df[df["_city_check"] == city_filter].drop(columns=["_city_check"])
+        print(f"  Filtered to city: {city_filter} ({len(df)} rows)")
+        if df.empty:
+            return {"total": 0, "excel_files": [], "json_files": []}
+
+    total = len(df)
+    excel_files = []
+    json_files = []
+
+    if category_name == "used_cars":
+        splits = split_used_cars(df)
+        for split_name, split_df in splits.items():
+            if split_df.empty:
+                continue
+            result = _process_dataframe(split_df, split_name, output_base_dir, upload_images, image_workers)
+            excel_files.extend(result["excel_files"])
+            json_files.extend(result["json_files"])
+    else:
+        result = _process_dataframe(df, category_name, output_base_dir, upload_images, image_workers)
+        excel_files.extend(result["excel_files"])
+        json_files.extend(result["json_files"])
 
     return {"total": total, "excel_files": excel_files, "json_files": json_files}
