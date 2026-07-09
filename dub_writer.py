@@ -11,8 +11,9 @@ from r2_uploader import upload_buffer
 from datetime import datetime
 
 CAR_CATEGORIES = {"used_cars", "rental_cars"}
-CONDITION_FIELD = "car_condition"     
-EXPORT_FIELD = "is_export_car" 
+
+CONDITION_FIELD = "car_condtion"  
+EXPORT_FIELD = "is_export_care"
 NEW_VALUE = "new"
 
 def parse_dict_field(value):
@@ -193,7 +194,6 @@ def _write_excel_and_json(sheets: dict, xlsx_path: str) -> tuple:
 
     return xlsx_path, json_path
 
-
 def split_used_cars(df: pd.DataFrame) -> dict:
     if CONDITION_FIELD not in df.columns:
         print(f"  ⚠️ Column '{CONDITION_FIELD}' not found, skipping split.")
@@ -262,6 +262,7 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
         os.makedirs(json_dir, exist_ok=True)
         os.makedirs(summary_dir, exist_ok=True)
 
+        # كل الـ 3 (new_cars, export_cars, used_cars) هي سيارات، فبتاخد نفس منطق التقسيم بالماركة/الموديل
         is_car_split = category_name in CAR_CATEGORIES or category_name in {"new_cars", "export_cars", "used_cars"}
 
         if is_car_split:
@@ -339,18 +340,10 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
 
 
 def process_category(category_name: str, jsonl_files: list, output_base_dir: str,
-                      upload_images: bool = True, image_workers: int = 3,
-                      city_filter: str = None) -> dict:
+                      upload_images: bool = True, image_workers: int = 3) -> dict:
     df = load_all_hits(jsonl_files)
     if df.empty:
         return {"total": 0, "excel_files": [], "json_files": []}
-
-    if city_filter:
-        df["_city_check"] = df["site"].apply(get_city_name)
-        df = df[df["_city_check"] == city_filter].drop(columns=["_city_check"])
-        print(f"  Filtered to city: {city_filter} ({len(df)} rows)")
-        if df.empty:
-            return {"total": 0, "excel_files": [], "json_files": []}
 
     total = len(df)
     excel_files = []
