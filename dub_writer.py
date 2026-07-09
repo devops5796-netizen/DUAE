@@ -12,8 +12,8 @@ from datetime import datetime
 
 CAR_CATEGORIES = {"used_cars", "rental_cars"}
 
-CONDITION_FIELD = "car_condtion"  
-EXPORT_FIELD = "is_export_care"
+CONDITION_FIELD = "car_condition"  
+EXPORT_FIELD = "is_export_car"
 NEW_VALUE = "new"
 
 def parse_dict_field(value):
