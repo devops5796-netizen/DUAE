@@ -134,7 +134,7 @@ def download_images(images: list, slug: str = "", category: str = "", id_prod: s
 
 
 def process_images_for_group(df: pd.DataFrame, category: str, city: str, cat0: str, cat1: str,
-                              workers: int = 3) -> pd.DataFrame:
+                              workers: int = 6) -> pd.DataFrame:
     df = df.copy()
     n = len(df)
     results = [None] * n
@@ -262,7 +262,6 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
         os.makedirs(json_dir, exist_ok=True)
         os.makedirs(summary_dir, exist_ok=True)
 
-        # كل الـ 3 (new_cars, export_cars, used_cars) هي سيارات، فبتاخد نفس منطق التقسيم بالماركة/الموديل
         is_car_split = category_name in CAR_CATEGORIES or category_name in {"new_cars", "export_cars", "used_cars"}
 
         if is_car_split:
@@ -340,7 +339,7 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
 
 
 def process_category(category_name: str, jsonl_files: list, output_base_dir: str,
-                      upload_images: bool = True, image_workers: int = 3) -> dict:
+                      upload_images: bool = True, image_workers: int = 6) -> dict:
     df = load_all_hits(jsonl_files)
     if df.empty:
         return {"total": 0, "excel_files": [], "json_files": []}
