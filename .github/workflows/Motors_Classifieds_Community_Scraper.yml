@@ -163,7 +163,7 @@ jobs:
     needs: scrape
 
     strategy:
-      max-parallel: 8
+      max-parallel: 10
       matrix:
         category:
           - used_cars
