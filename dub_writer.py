@@ -16,6 +16,12 @@ CONDITION_FIELD = "car_condition"
 EXPORT_FIELD = "is_export_car"
 NEW_VALUE = "new"
 
+COLUMNS_TO_DROP = [
+    "photo", "photo_thumbnails", "photos", "_highlightResult",
+    "site_categories_slug_tree", "category_slug_tree", "category_tree",
+    "category", "permalink"
+]
+
 def parse_dict_field(value):
     if isinstance(value, dict):
         return value
@@ -76,7 +82,14 @@ def load_all_hits(jsonl_files: list) -> pd.DataFrame:
                 line = line.strip()
                 if line:
                     rows.append(json.loads(line))
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+
+    existing_cols = [c for c in COLUMNS_TO_DROP if c in df.columns]
+    if existing_cols:
+        df = df.drop(columns=existing_cols)
+        print(f"  Dropped columns: {existing_cols}")
+
+    return df
 
 
 def download_images(images: list, slug: str = "", category: str = "", id_prod: str = "",
