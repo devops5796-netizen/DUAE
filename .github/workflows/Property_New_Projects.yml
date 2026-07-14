@@ -6,8 +6,6 @@ on:
 jobs:
   detect_merge_batches:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.build.outputs.matrix }}
     steps:
       - id: build
         run: |
