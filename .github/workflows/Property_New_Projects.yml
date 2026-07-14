@@ -1,0 +1,607 @@
+name: Property New Projects Scraper
+
+on:
+  workflow_dispatch:
+
+jobs:
+  detect_merge_batches:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.build.outputs.matrix }}
+    steps:
+      - id: build
+        run: |
+          python << 'EOF'
+          import json
+          import os
+          import math
+          import requests
+          from urllib.parse import urlencode
+
+          URL = "https://wd0ptz13zs-1.algolianet.com/1/indexes/*/queries"
+          HEADERS = {
+              "accept": "*/*",
+              "content-type": "application/json",
+              "origin": "https://uae.dubizzle.com",
+              "referer": "https://uae.dubizzle.com/",
+              "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          }
+          QUERY_PARAMS = {
+              "x-algolia-agent": "Algolia for JavaScript (4.24.0); Browser (lite)",
+              "x-algolia-api-key": "cdd839b4fdac840289e88633779e8634",
+              "x-algolia-application-id": "WD0PTZ13ZS",
+          }
+          algolia_params = {
+              "page": 0,
+              "hitsPerPage": 35,
+              "filters": '("categories_v2.slug_paths":"property-for-sale/residential")',
+          }
+          payload = {"requests": [{"indexName": "property_new_projects.com", "query": "", "params": urlencode(algolia_params)}]}
+
+          r = requests.post(URL, params=QUERY_PARAMS, headers=HEADERS, json=payload, timeout=30)
+          data = r.json()
+          nb_pages = data["results"][0]["nbPages"]
+          print(f"Total pages: {nb_pages}")
+
+          ROWS_PER_BATCH = 2500
+          HITS_PER_PAGE = 35
+          PAGES_PER_BATCH = math.ceil(ROWS_PER_BATCH / HITS_PER_PAGE)
+          PAGES_PER_JOB = 20
+
+          matrix_scrape = {"include": []}
+          for i in range(0, nb_pages, PAGES_PER_JOB):
+              start = i
+              end = min(i + PAGES_PER_JOB - 1, nb_pages - 1)
+              matrix_scrape["include"].append({"start": start, "end": end})
+
+          matrix_merge = {"include": []}
+          n_batches = math.ceil(nb_pages / PAGES_PER_BATCH)
+          for b in range(n_batches):
+              page_start = b * PAGES_PER_BATCH
+              page_end = min((b + 1) * PAGES_PER_BATCH - 1, nb_pages - 1)
+              matrix_merge["include"].append({"batch_index": str(b), "page_start": str(page_start), "page_end": str(page_end)})
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"scrape_matrix={json.dumps(matrix_scrape)}\n")
+              f.write(f"merge_matrix={json.dumps(matrix_merge)}\n")
+          EOF
+    outputs:
+      scrape_matrix: ${{ steps.build.outputs.scrape_matrix }}
+      merge_matrix: ${{ steps.build.outputs.merge_matrix }}
+
+  scrape:
+    runs-on: ubuntu-latest
+    needs: detect_merge_batches
+    strategy:
+      matrix: ${{ fromJson(needs.detect_merge_batches.outputs.scrape_matrix) }}
+      max-parallel: 10
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - run: python -u main_nw_proj.py ${{ matrix.start }} ${{ matrix.end }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: raw-new_projects-${{ matrix.start }}-${{ matrix.end }}
+          path: |
+            new_projects_${{ matrix.start }}_${{ matrix.end }}.jsonl
+            new_projects_${{ matrix.start }}_${{ matrix.end }}_failed.txt
+          if-no-files-found: ignore
+
+  merge_batch:
+    runs-on: ubuntu-latest
+    needs: [detect_merge_batches, scrape]
+    strategy:
+      matrix: ${{ fromJson(needs.detect_merge_batches.outputs.merge_matrix) }}
+      max-parallel: 10
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pandas openpyxl boto3 requests pillow python-dotenv
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: raw-new_projects-*
+          merge-multiple: true
+          path: raw_parts/
+      - env:
+          CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
+          CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
+        run: |
+          python << 'EOF'
+          import glob, re, os, json
+          from new_projects_writer import process_new_projects
+
+          page_start = int("${{ matrix.page_start }}")
+          page_end = int("${{ matrix.page_end }}")
+
+          all_jsonl = glob.glob('raw_parts/*.jsonl')
+          batch_jsonl = []
+          for f in all_jsonl:
+              m = re.search(r'_(\d+)_(\d+)\.jsonl$', f)
+              if m and int(m.group(1)) <= page_end and int(m.group(2)) >= page_start:
+                  batch_jsonl.append(f)
+
+          if not batch_jsonl:
+              exit(0)
+
+          result = process_new_projects(batch_jsonl, "output", upload_images=True)
+          print(f"Batch processed: {result['total']} rows")
+
+          failed_pages = []
+          for f in batch_jsonl:
+              ff = f.replace('.jsonl', '_failed.txt')
+              if os.path.exists(ff):
+                  with open(ff) as file:
+                      for line in file:
+                          if line.startswith('page='):
+                              failed_pages.append(int(line.split('=')[1]))
+
+          os.makedirs("output", exist_ok=True)
+          with open(f"output/_batch_failed_{page_start}_{page_end}.json", "w") as f:
+              json.dump({"page_start": page_start, "page_end": page_end,
+                         "total_pages_in_batch": page_end - page_start + 1,
+                         "failed_pages": sorted(failed_pages)}, f)
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: batch-new_projects-${{ matrix.batch_index }}
+          path: output/
+          if-no-files-found: ignore
+
+  final_merge:
+    runs-on: ubuntu-latest
+    needs: merge_batch
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install pandas openpyxl boto3
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: batch-new_projects-*
+          path: batches/
+
+      - env:
+          CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
+          CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
+        run: |
+          python << 'EOF'
+          import glob
+          import os
+          import json
+          import boto3
+          import pandas as pd
+
+          from datetime import datetime
+          from collections import defaultdict
+
+
+          # ============================================================
+          # R2 SETUP
+          # ============================================================
+
+          dt = datetime.now()
+
+          date_prefix = (
+              f"year={dt.year}/"
+              f"month={dt.strftime('%m')}/"
+              f"day={dt.strftime('%d')}"
+          )
+
+          client = boto3.client(
+              's3',
+              endpoint_url=os.environ['CF_R2_ENDPOINT_URL'],
+              aws_access_key_id=os.environ['CF_R2_ACCESS_KEY_ID'],
+              aws_secret_access_key=os.environ['CF_R2_SECRET_ACCESS_KEY'],
+              region_name='auto'
+          )
+
+          bucket = os.environ['CF_R2_BUCKET_NAME']
+
+
+          # ============================================================
+          # FIND ALL BATCH DIRECTORIES
+          # ============================================================
+
+          batch_dirs = glob.glob('batches/batch-new_projects-*')
+
+          print(f"Found {len(batch_dirs)} batch directories")
+
+
+          # ============================================================
+          # COLLECT ALL FAILED PAGES
+          # ============================================================
+
+          all_failed_pages = []
+
+          for bd in batch_dirs:
+              failed_files = glob.glob(
+                  os.path.join(bd, "**", "_batch_failed_*.json"),
+                  recursive=True
+              )
+
+              for failed_file in failed_files:
+                  try:
+                      with open(failed_file, "r", encoding="utf-8") as f:
+                          data = json.load(f)
+
+                      all_failed_pages.extend(
+                          data.get("failed_pages", [])
+                      )
+
+                  except Exception as e:
+                      print(
+                          f"Failed to read {failed_file}: {e}"
+                      )
+
+          all_failed_pages = sorted(set(all_failed_pages))
+
+          print(
+              f"Total unique failed pages: "
+              f"{len(all_failed_pages)}"
+          )
+
+
+          # ============================================================
+          # GROUP EXCEL FILES FROM ALL BATCHES
+          # ============================================================
+
+          excel_groups = defaultdict(list)
+
+          for bd in batch_dirs:
+              for root, dirs, files in os.walk(bd):
+                  for file in files:
+
+                      if file.endswith('.xlsx'):
+
+                          fp = os.path.join(root, file)
+
+                          rel = os.path.relpath(fp, bd)
+
+                          excel_groups[rel].append(fp)
+
+
+          # ============================================================
+          # FINAL MERGE PER GROUP
+          # ============================================================
+
+          for rel, files in excel_groups.items():
+
+              print(f"\nProcessing group: {rel}")
+
+              combined = defaultdict(list)
+
+              # --------------------------------------------------------
+              # Read all Excel batches
+              # --------------------------------------------------------
+
+              for bf in files:
+
+                  xl = pd.ExcelFile(bf)
+
+                  for sheet in xl.sheet_names:
+
+                      combined[sheet].append(
+                          xl.parse(sheet)
+                      )
+
+
+              # --------------------------------------------------------
+              # Merge sheets
+              # --------------------------------------------------------
+
+              final_sheets = {}
+
+              for sheet, dfs in combined.items():
+
+                  merged = pd.concat(
+                      dfs,
+                      ignore_index=True
+                  )
+
+                  if 'slug' in merged.columns:
+
+                      merged = merged.drop_duplicates(
+                          subset=['slug'],
+                          keep='first'
+                      )
+
+                  final_sheets[sheet] = merged
+
+
+              # ========================================================
+              # EXCEL
+              # ========================================================
+
+              local_xlsx = os.path.join(
+                  "final_output",
+                  rel
+              )
+
+              os.makedirs(
+                  os.path.dirname(local_xlsx),
+                  exist_ok=True
+              )
+
+              with pd.ExcelWriter(
+                  local_xlsx,
+                  engine="openpyxl"
+              ) as writer:
+
+                  for sheet_name, df in final_sheets.items():
+
+                      df.to_excel(
+                          writer,
+                          sheet_name=sheet_name,
+                          index=False
+                      )
+
+
+              # ========================================================
+              # JSON
+              # ========================================================
+
+              json_rel = (
+                  rel
+                  .replace(
+                      f"{os.sep}excel{os.sep}",
+                      f"{os.sep}json{os.sep}"
+                  )
+                  .replace(
+                      ".xlsx",
+                      ".json"
+                  )
+              )
+
+              local_json = os.path.join(
+                  "final_output",
+                  json_rel
+              )
+
+              os.makedirs(
+                  os.path.dirname(local_json),
+                  exist_ok=True
+              )
+
+              all_records = []
+
+              for sheet_name, df in final_sheets.items():
+
+                  records = df.to_dict(
+                      orient="records"
+                  )
+
+                  for record in records:
+                      record["_sheet"] = sheet_name
+
+                  all_records.extend(records)
+
+
+              with open(
+                  local_json,
+                  "w",
+                  encoding="utf-8"
+              ) as f:
+
+                  json.dump(
+                      all_records,
+                      f,
+                      ensure_ascii=False,
+                      indent=2,
+                      default=str
+                  )
+
+
+              # ========================================================
+              # GET GROUP BASE PATH
+              #
+              # Example:
+              #
+              # Dubai/Property/Property_for_Sale/
+              # new_projects/excel/new_projects.xlsx
+              #
+              # becomes:
+              #
+              # Dubai/Property/Property_for_Sale/new_projects
+              # ========================================================
+
+              group_base_rel = os.path.dirname(
+                  os.path.dirname(rel)
+              )
+
+
+              # ========================================================
+              # SUMMARY.TXT
+              # ========================================================
+
+              summary_rel = os.path.join(
+                  group_base_rel,
+                  "summary",
+                  "summary.txt"
+              )
+
+              local_summary = os.path.join(
+                  "final_output",
+                  summary_rel
+              )
+
+              os.makedirs(
+                  os.path.dirname(local_summary),
+                  exist_ok=True
+              )
+
+
+              total_rows = sum(
+                  len(df)
+                  for df in final_sheets.values()
+              )
+
+
+              with open(
+                  local_summary,
+                  "w",
+                  encoding="utf-8"
+              ) as f:
+
+                  f.write(
+                      "=== new_projects ===\n"
+                  )
+
+                  f.write(
+                      f"Total Rows: {total_rows}\n"
+                  )
+
+                  f.write(
+                      f"Total Sheets: "
+                      f"{len(final_sheets)}\n"
+                  )
+
+                  f.write(
+                      f"Failed Pages: "
+                      f"{len(all_failed_pages)}\n"
+                  )
+
+                  f.write(
+                      "Generated at: "
+                      f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                  )
+
+
+              # ========================================================
+              # FAILED_NEW_PROJECTS.TXT
+              # ========================================================
+
+              failed_rel = os.path.join(
+                  group_base_rel,
+                  "summary",
+                  "failed_new_projects.txt"
+              )
+
+              local_failed = os.path.join(
+                  "final_output",
+                  failed_rel
+              )
+
+
+              with open(
+                  local_failed,
+                  "w",
+                  encoding="utf-8"
+              ) as f:
+
+                  f.write(
+                      "=== Failed New Projects Pages ===\n"
+                  )
+
+                  f.write(
+                      f"Total Failed Pages: "
+                      f"{len(all_failed_pages)}\n\n"
+                  )
+
+                  for page in all_failed_pages:
+
+                      f.write(
+                          f"page={page}\n"
+                      )
+
+
+              # ========================================================
+              # UPLOAD EXCEL
+              # ========================================================
+
+              excel_r2_key = (
+                  f"DUAE/{date_prefix}/"
+                  f"{rel.replace(os.sep, '/')}"
+              )
+
+              client.upload_file(
+                  local_xlsx,
+                  bucket,
+                  excel_r2_key,
+                  ExtraArgs={
+                      'ContentType':
+                      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                  }
+              )
+
+
+              # ========================================================
+              # UPLOAD JSON
+              # ========================================================
+
+              json_r2_key = (
+                  f"DUAE/{date_prefix}/"
+                  f"{json_rel.replace(os.sep, '/')}"
+              )
+
+              client.upload_file(
+                  local_json,
+                  bucket,
+                  json_r2_key,
+                  ExtraArgs={
+                      'ContentType':
+                      'application/json; charset=utf-8'
+                  }
+              )
+
+
+              # ========================================================
+              # UPLOAD SUMMARY
+              # ========================================================
+
+              summary_r2_key = (
+                  f"DUAE/{date_prefix}/"
+                  f"{summary_rel.replace(os.sep, '/')}"
+              )
+
+              client.upload_file(
+                  local_summary,
+                  bucket,
+                  summary_r2_key,
+                  ExtraArgs={
+                      'ContentType':
+                      'text/plain; charset=utf-8'
+                  }
+              )
+
+
+              # ========================================================
+              # UPLOAD FAILED FILE
+              # ========================================================
+
+              failed_r2_key = (
+                  f"DUAE/{date_prefix}/"
+                  f"{failed_rel.replace(os.sep, '/')}"
+              )
+
+              client.upload_file(
+                  local_failed,
+                  bucket,
+                  failed_r2_key,
+                  ExtraArgs={
+                      'ContentType':
+                      'text/plain; charset=utf-8'
+                  }
+              )
+
+
+              print(f"Uploaded Excel:  {excel_r2_key}")
+              print(f"Uploaded JSON:   {json_r2_key}")
+              print(f"Uploaded Summary: {summary_r2_key}")
+              print(f"Uploaded Failed:  {failed_r2_key}")
+
+          EOF
