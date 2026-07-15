@@ -128,7 +128,7 @@ jobs:
     needs: detect_pages
     strategy:
       matrix: ${{ fromJson(needs.detect_pages.outputs.matrix) }}
-      max-parallel: 10
+      max-parallel: 5
       fail-fast: false
 
     steps:
@@ -162,7 +162,7 @@ jobs:
     needs: scrape
 
     strategy:
-      max-parallel: 10
+      max-parallel: 5
       matrix:
         category:
           - used_cars
