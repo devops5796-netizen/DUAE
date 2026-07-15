@@ -3,8 +3,8 @@ import json
 import time
 import requests
 import random
+#import pandas as pd
 from datetime import datetime, timezone, timedelta
-import pandas as pd
 from request_tracker import tracker
 
 URL = "https://wd0ptz13zs-dsn.algolia.net/1/indexes/*/queries"
