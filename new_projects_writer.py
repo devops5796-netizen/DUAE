@@ -163,7 +163,7 @@ def download_images(images: list, slug_id: str = "", city: str = "", cat0: str =
     return r2_paths
 
 
-def process_images_for_group(df: pd.DataFrame, city: str, cat0: str, cat1: str, workers: int = 4) -> pd.DataFrame:
+def process_images_for_group(df: pd.DataFrame, city: str, cat0: str, cat1: str, workers: int = 2) -> pd.DataFrame:
     df = df.copy()
     n = len(df)
     results = [None] * n
@@ -216,7 +216,7 @@ def _write_excel_and_json(sheets: dict, xlsx_path: str, json_path: str) -> tuple
 
 
 def process_new_projects(jsonl_files: list, output_base_dir: str,
-                          upload_images: bool = True, image_workers: int = 4,
+                          upload_images: bool = True, image_workers: int = 2,
                           city_filter: str = None) -> dict:
     df = load_all_hits(jsonl_files)
     if df.empty:
