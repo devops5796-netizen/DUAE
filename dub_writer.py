@@ -38,7 +38,26 @@ def parse_dict_field(value):
 
 def get_city_name(site_value) -> str:
     site = parse_dict_field(site_value)
-    return site.get("en", "Unknown")
+    if not site:
+        return "Unknown"
+
+    if "en" in site:
+        city = site.get("en", "Unknown")
+    else:
+        name_field = site.get("name")
+        if isinstance(name_field, dict):
+            city = name_field.get("en", "Unknown")
+        elif isinstance(name_field, str):
+            city = name_field
+        else:
+            city = "Unknown"
+
+    CITY_MAPPING = {
+        "Ras al Khaimah": "Ras Al Khaimah",
+        "Umm al Quwain": "Umm Al Quwain",
+    }
+
+    return CITY_MAPPING.get(city, city)
 
 
 def get_category_names(category_v2_value) -> list:
