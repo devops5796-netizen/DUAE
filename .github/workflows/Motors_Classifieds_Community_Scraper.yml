@@ -217,6 +217,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          
+      - name: Upload debug screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshots-${{ matrix.category }}
+          path: debug_no_phone_*.png
+          if-no-files-found: ignore
 
       - name: Install dependencies
         run: pip install pandas openpyxl boto3 requests pillow python-dotenv playwright playwright-stealth
