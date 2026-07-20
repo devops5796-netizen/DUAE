@@ -4,15 +4,20 @@ import ast
 import os
 import re
 import io
+import random
+import time
 import requests as req
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from r2_uploader import upload_buffer
 from datetime import datetime
 
+from playwright.sync_api import sync_playwright
+from playwright_stealth import Stealth
+
 CAR_CATEGORIES = {"used_cars", "rental_cars"}
 
-CONDITION_FIELD = "car_condition"  
+CONDITION_FIELD = "car_condition"
 EXPORT_FIELD = "is_export_car"
 NEW_VALUE = "new"
 
@@ -21,6 +26,17 @@ COLUMNS_TO_DROP = [
     "site_categories_slug_tree", "category_slug_tree", "category_tree",
     "category", "permalink"
 ]
+
+PHONE_BUTTON_SELECTORS = [
+    '[data-testid="call-cta-button"]',
+    'button:has-text("Show Phone Number")',
+    'button:has-text("Show Number")',
+    'button:has-text("Show phone number")',
+    'button:has-text("Call")',
+    '[data-testid*="phone" i]',
+    '[data-testid*="show-phone" i]',
+]
+
 
 def parse_dict_field(value):
     if isinstance(value, dict):
@@ -76,7 +92,7 @@ def extract_sheet_name(names_en: list) -> str:
         return "Other"
     if len(names_en) == 2:
         return names_en[1]
-    
+
     level2 = names_en[2]
     if len(names_en) >= 4:
         level3 = names_en[3]
@@ -110,6 +126,198 @@ def load_all_hits(jsonl_files: list) -> pd.DataFrame:
 
     return df
 
+def _get_english_url(absolute_url_value):
+    parsed = parse_dict_field(absolute_url_value)
+    if isinstance(parsed, dict):
+        return parsed.get("en") or parsed.get("ar")
+    if isinstance(absolute_url_value, str):
+        return absolute_url_value
+    return None
+
+
+def _reveal_contact_info(page, timeout_ms=15000):
+    captured = {"data": None}
+
+    def handle_response(response):
+        if "listing-profile" in response.url and response.status == 200:
+            try:
+                captured["data"] = response.json()
+            except Exception:
+                pass
+
+    page.on("response", handle_response)
+
+    button = None
+    for selector in PHONE_BUTTON_SELECTORS:
+        loc = page.locator(selector).first
+        try:
+            if loc.is_visible(timeout=2000):
+                button = loc
+                break
+        except Exception:
+            continue
+
+    if button is None:
+        page.remove_listener("response", handle_response)
+        return None
+
+    try:
+        button.scroll_into_view_if_needed()
+        page.wait_for_timeout(300)
+        button.click(force=True)
+        waited = 0
+        while captured["data"] is None and waited < timeout_ms:
+            page.wait_for_timeout(300)
+            waited += 300
+    except Exception:
+        pass
+    finally:
+        page.remove_listener("response", handle_response)
+
+    return captured["data"]
+
+
+DESCRIPTION_SELECTORS = [
+    '[data-testid="description"]',
+    '[data-testid="description-heading"]',
+]
+
+DETAIL_ACTION_PATTERN = re.compile(r"^listings/detail\w*Request/fulfilled$")
+
+
+def extract_full_listing_payload(page, html):
+    payload = None
+
+    try:
+        next_data_text = page.locator("#__NEXT_DATA__").text_content(timeout=5000)
+        next_data = json.loads(next_data_text)
+        actions = next_data["props"]["pageProps"].get("reduxWrapperActionsGIPP", [])
+        for action in actions:
+            if DETAIL_ACTION_PATTERN.match(action.get("type", "")):
+                payload = action["payload"]
+                break
+    except Exception:
+        pass
+
+    if payload is None:
+        chunks = re.findall(
+            r'self\.__next_f\.push\(\[1,\s*"((?:[^"\\]|\\.)*)"\]\)',
+            html,
+        )
+        if chunks:
+            full_text = "".join(c.encode().decode("unicode_escape") for c in chunks)
+            match = re.search(r'listings/detail\w*Request/fulfilled', full_text)
+            if match:
+                idx = match.start()
+                payload_start = full_text.find('"payload"', idx)
+                if payload_start == -1:
+                    payload_start = full_text.find("{", idx)
+                brace_start = full_text.find("{", payload_start)
+                depth = 0
+                end = None
+                for i in range(brace_start, len(full_text)):
+                    if full_text[i] == "{":
+                        depth += 1
+                    elif full_text[i] == "}":
+                        depth -= 1
+                        if depth == 0:
+                            end = i + 1
+                            break
+                if end is not None:
+                    payload = json.loads(full_text[brace_start:end])
+
+    return payload
+
+
+def _extract_description(page):
+    for selector in DESCRIPTION_SELECTORS:
+        try:
+            loc = page.locator(selector).first
+            if loc.is_visible(timeout=3000):
+                text = loc.inner_text()
+                if text:
+                    return text
+        except Exception:
+            continue
+    return None
+
+
+def enrich_with_contact_and_description(
+    df: pd.DataFrame,
+    url_column: str = "absolute_url",
+    headless: bool = True,
+    min_delay: float = 5,
+    max_delay: float = 12,
+) -> pd.DataFrame:
+    df = df.copy()
+    contact_info_col = [None] * len(df)
+    description_col = [None] * len(df)
+
+    with Stealth().use_sync(sync_playwright()) as p:
+        browser = p.chromium.launch(headless=headless, channel="chrome")
+        context = browser.new_context(
+            viewport={"width": 1920, "height": 1080},
+            locale="en-US",
+            timezone_id="Asia/Dubai",
+        )
+        page = context.new_page()
+
+        for pos, (idx, row) in enumerate(df.iterrows()):
+            url = _get_english_url(row.get(url_column))
+            if not url:
+                print(f"  [{pos + 1}/{len(df)}] Skipped - no URL")
+                continue
+
+            print(f"  [{pos + 1}/{len(df)}] Visiting: {url}")
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                page.wait_for_timeout(random.uniform(1500, 3000))
+
+                html = page.content()
+                if "Pardon Our Interruption" in html:
+                    print("    -> Imperva challenge hit, stopping enrichment.")
+                    break
+
+                contact_info_col[pos] = _reveal_contact_info(page)
+                description_col[pos] = _extract_description(page)
+
+                has_phone = (
+                    isinstance(contact_info_col[pos], dict)
+                    and contact_info_col[pos].get("phone_number")
+                )
+
+                if not has_phone:
+                    # مفيش رقم تليفون فعلي للمنتج - نرجع للـ full listing payload
+                    # ونجيب منه 'lister' كـ fallback بدل ما العمود يفضل فاضي
+                    full_payload = extract_full_listing_payload(page, html)
+                    lister = (full_payload or {}).get("lister")
+                    if lister:
+                        contact_info_col[pos] = {
+                            "source": "lister_fallback",
+                            **lister,
+                        }
+                        print("    -> No phone number available, used lister fallback")
+
+                phone = None
+                if isinstance(contact_info_col[pos], dict):
+                    phone = contact_info_col[pos].get("phone_number")
+                print(f"    -> phone: {phone}")
+
+            except Exception as e:
+                print(f"    -> FAILED: {e}")
+
+            if pos < len(df) - 1:
+                delay = random.uniform(min_delay, max_delay)
+                time.sleep(delay)
+
+        page.close()
+        browser.close()
+
+    df["contact_info"] = contact_info_col
+    df["description_full"] = description_col
+    return df
+
+
 
 def download_images(images: list, slug: str = "", category: str = "", id_prod: str = "",
                      city: str = "", cat0: str = "", cat1: str = "") -> list:
@@ -124,7 +332,6 @@ def download_images(images: list, slug: str = "", category: str = "", id_prod: s
     slug = slug or "unknown"
     file_prefix = id_prod if id_prod else slug
 
-    # نجمع cat0/cat1 في مسار واحد عشان يتوافق مع باقي الهيكل (city/cat0/cat1/images/...)
     category_display = f"{cat0}/{cat1}" if cat0 and cat1 else (cat1 or cat0)
 
     for idx, img_url in enumerate(images, start=1):
@@ -226,6 +433,7 @@ def _write_excel_and_json(sheets: dict, xlsx_path: str) -> tuple:
 
     return xlsx_path, json_path
 
+
 def split_used_cars(df: pd.DataFrame) -> dict:
     if CONDITION_FIELD not in df.columns:
         print(f"  ⚠️ Column '{CONDITION_FIELD}' not found, skipping split.")
@@ -251,6 +459,7 @@ def split_used_cars(df: pd.DataFrame) -> dict:
         "export_cars": export_cars_df,
         "used_cars": used_cars_df,
     }
+
 
 def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: str,
                         upload_images: bool, image_workers: int) -> dict:
@@ -371,10 +580,15 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
 
 
 def process_category(category_name: str, jsonl_files: list, output_base_dir: str,
-                      upload_images: bool = True, image_workers: int = 2) -> dict:
+                      upload_images: bool = True, image_workers: int = 2,
+                      enrich_contact_details: bool = True) -> dict:
     df = load_all_hits(jsonl_files)
     if df.empty:
         return {"total": 0, "excel_files": [], "json_files": []}
+
+    if enrich_contact_details and "absolute_url" in df.columns:
+        print(f"  Enriching {len(df)} rows with contact_info + description_full...")
+        df = enrich_with_contact_and_description(df)
 
     total = len(df)
     excel_files = []

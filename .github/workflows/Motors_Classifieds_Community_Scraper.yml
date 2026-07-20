@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.build_matrix.outputs.matrix }}
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -102,6 +101,7 @@ jobs:
                   r = requests.post(URL, params=PARAMS, json=payload, timeout=30)
                   data = r.json()
                   nb_pages = data["results"][0]["nbPages"]
+                  nb_pages = 3
                   print(f"  {category_name}: {nb_pages} pages")
               except Exception as e:
                   print(f"  Failed: {e}")
@@ -164,7 +164,7 @@ jobs:
     needs: scrape
 
     strategy:
-      max-parallel: 5
+      max-parallel: 3
       matrix:
         category:
           - used_cars
@@ -219,7 +219,10 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install pandas openpyxl boto3 requests pillow python-dotenv
+        run: pip install pandas openpyxl boto3 requests pillow python-dotenv playwright playwright-stealth
+
+      - name: Install Playwright Chrome
+        run: playwright install --with-deps chrome
 
       - name: Download raw data for ${{ matrix.category }}
         uses: actions/download-artifact@v4
@@ -296,7 +299,7 @@ jobs:
 
           # Process data
           output_base = "output"
-          result = process_category(category, jsonl_files, output_base, upload_images=True)
+          result = process_category(category, jsonl_files, output_base, upload_images=True, enrich_contact_details=True)
 
           print(f"\nCategory: {category} | Total rows: {result['total']} | Excel files: {len(result['excel_files'])}")
           print(f"Total Pages: {total_pages} | Failed Pages: {len(failed_pages)} | Failed: {failed_percentage:.2f}%")
