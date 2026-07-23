@@ -473,7 +473,7 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
         return {"total": 0, "excel_files": [], "json_files": []}
 
     if enrich_contact_details and "absolute_url" in df.columns:
-        print(f"  Enriching {len(df)} rows with contact_info + description_full...")
+        print(f"  Enriching {len(df)} rows with description_full...")
         df = enrich_with_description(df)
 
     total = len(df)
