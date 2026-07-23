@@ -40,7 +40,7 @@ jobs:
           CATEGORIES = {
               #motors
               "used_cars": {"index": "by_added_desc_motors.com", "filter": '("category_v2.slug_paths":"motors/used-cars")'},
-              # "rental_cars": {"index": "by_added_desc_rental-cars.com", "filter": '("category_v2.slug_paths":"motors/rental-cars")'},
+              "rental_cars": {"index": "by_added_desc_rental-cars.com", "filter": '("category_v2.slug_paths":"motors/rental-cars")'},
               # "motorcycles": {"index": "by_added_desc_motors.com", "filter": '("category_v2.slug_paths":"motors/motorcycles")'},
               # "auto_accessories_parts": {"index": "by_added_desc_motors.com", "filter": '("category_v2.slug_paths":"motors/auto-accessories-parts")'},
               # "heavy_vehicles": {"index": "by_added_desc_motors.com", "filter": '("category_v2.slug_paths":"motors/heavy-vehicles")'},
@@ -101,7 +101,7 @@ jobs:
                   r = requests.post(URL, params=PARAMS, json=payload, timeout=30)
                   data = r.json()
                   nb_pages = data["results"][0]["nbPages"]
-                  nb_pages = 3
+                  nb_pages = 10
                   print(f"  {category_name}: {nb_pages} pages")
               except Exception as e:
                   print(f"  Failed: {e}")
@@ -168,7 +168,7 @@ jobs:
       matrix:
         category:
           - used_cars
-          # - rental_cars
+          - rental_cars
           # - motorcycles
           # - auto_accessories_parts
           # - heavy_vehicles
@@ -217,14 +217,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Upload debug screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-screenshots-${{ matrix.category }}
-          path: debug_no_phone_*.png
-          if-no-files-found: ignore
 
       - name: Install dependencies
         run: pip install pandas openpyxl boto3 requests pillow python-dotenv playwright playwright-stealth
@@ -424,3 +416,93 @@ jobs:
           name: failed-${{ matrix.category }}
           path: raw_parts/*_failed.txt
           if-no-files-found: ignore
+
+      - name: Compress images and cleanup
+        env:
+          CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
+          CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
+        run: |
+          python << 'EOF'
+          import os
+          import boto3
+          import zipfile
+          from datetime import datetime
+          from collections import defaultdict
+
+          category = "${{ matrix.category }}"
+          dt = datetime.now()
+          date_prefix = f"year={dt.year}/month={dt.strftime('%m')}/day={dt.strftime('%d')}"
+
+          client = boto3.client('s3',
+              endpoint_url=os.environ['CF_R2_ENDPOINT_URL'],
+              aws_access_key_id=os.environ['CF_R2_ACCESS_KEY_ID'],
+              aws_secret_access_key=os.environ['CF_R2_SECRET_ACCESS_KEY'],
+              region_name='auto'
+          )
+          bucket = os.environ['CF_R2_BUCKET_NAME']
+
+          base_prefix = f"DUAE/{date_prefix}/"
+
+          all_image_keys = []
+          paginator = client.get_paginator('list_objects_v2')
+          for page in paginator.paginate(Bucket=bucket, Prefix=base_prefix):
+              for obj in page.get('Contents', []):
+                  key = obj['Key']
+                  if '/images/' in key and not key.endswith('.zip'):
+                      all_image_keys.append(key)
+
+          if not all_image_keys:
+              print(f"No images found to compress for {category}")
+              exit(0)
+
+          images_by_folder = defaultdict(list)
+          for key in all_image_keys:
+              folder = key.rsplit('/', 1)[0]
+              images_by_folder[folder].append(key)
+
+          print(f"Found {len(images_by_folder)} image folders to compress for {category}")
+
+          for folder, keys in images_by_folder.items():
+              print(f"  Compressing {len(keys)} images in {folder}...")
+
+              local_dir = os.path.join("temp_images", folder.replace('/', '_'))
+              os.makedirs(local_dir, exist_ok=True)
+
+              local_files = []
+              for key in keys:
+                  filename = key.rsplit('/', 1)[-1]
+                  local_path = os.path.join(local_dir, filename)
+                  try:
+                      client.download_file(bucket, key, local_path)
+                      local_files.append((local_path, filename))
+                  except Exception as e:
+                      print(f"    [ERROR] Failed to download {key}: {e}")
+
+              if not local_files:
+                  print(f"    No files downloaded, skipping folder.")
+                  continue
+
+              zip_local_path = os.path.join("temp_images", f"{folder.replace('/', '_')}.zip")
+              with zipfile.ZipFile(zip_local_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+                  for local_path, filename in local_files:
+                      zf.write(local_path, arcname=filename)
+
+              zip_r2_key = f"{folder}/images.zip"
+              client.upload_file(zip_local_path, bucket, zip_r2_key,
+                  ExtraArgs={'ContentType': 'application/zip'})
+              print(f"    Uploaded zip: {zip_r2_key} ({len(local_files)} images)")
+
+              delete_objects = [{'Key': k} for k in keys]
+              for i in range(0, len(delete_objects), 1000):
+                  chunk = delete_objects[i:i+1000]
+                  client.delete_objects(Bucket=bucket, Delete={'Objects': chunk})
+              print(f"    Deleted {len(keys)} individual images from {folder}")
+
+              for local_path, _ in local_files:
+                  os.remove(local_path)
+              os.remove(zip_local_path)
+
+          print(f"\nDONE: Compressed images for {category}")
+          EOF

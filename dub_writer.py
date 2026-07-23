@@ -128,12 +128,7 @@ def load_all_hits(jsonl_files: list) -> pd.DataFrame:
     return df
 
 
-# ------------------------------------------------------------------
-# -- إثراء الـ df ببيانات الاتصال (contact_info) والـ description الكامل --
-# ------------------------------------------------------------------
-
 def _get_english_url(absolute_url_value):
-    """absolute_url بييجي كـ {'en': ..., 'ar': ...} - بنطلع النسخة الإنجليزية."""
     parsed = parse_dict_field(absolute_url_value)
     if isinstance(parsed, dict):
         return parsed.get("en") or parsed.get("ar")
@@ -142,126 +137,12 @@ def _get_english_url(absolute_url_value):
     return None
 
 
-def _reveal_contact_info(page, timeout_ms=25000):
-    """
-    بتدور على زرار الرقم، تضغطه، وتمسك رد listing-profile (status 200).
-    بتطبع كل الـ responses اللي اتشافت (حتى لو مش 200) للتشخيص.
-    """
-    captured = {"data": None}
-    seen_responses = []
-
-    def handle_response(response):
-        if "listing-profile" in response.url:
-            seen_responses.append(response.status)
-            if response.status == 200 and captured["data"] is None:
-                try:
-                    captured["data"] = response.json()
-                except Exception as e:
-                    print(f"      [DEBUG] Failed to parse 200 response as JSON: {e}")
-
-    page.on("response", handle_response)
-
-    button = None
-    used_selector = None
-    for selector in PHONE_BUTTON_SELECTORS:
-        loc = page.locator(selector).first
-        try:
-            if loc.is_visible(timeout=2000):
-                button = loc
-                used_selector = selector
-                break
-        except Exception:
-            continue
-
-    if button is None:
-        print("      [DEBUG] No phone button found matching any selector")
-        page.remove_listener("response", handle_response)
-        return None
-
-    print(f"      [DEBUG] Found button: {used_selector}")
-
-    try:
-        button.scroll_into_view_if_needed()
-        page.wait_for_timeout(500)
-        button.click(force=True)
-        print("      [DEBUG] Clicked button, waiting for response...")
-
-        waited = 0
-        while captured["data"] is None and waited < timeout_ms:
-            page.wait_for_timeout(500)
-            waited += 500
-
-        if captured["data"] is None:
-            print(f"      [DEBUG] Timed out after {timeout_ms}ms. "
-                  f"Responses seen (status codes): {seen_responses}")
-    except Exception as e:
-        print(f"      [DEBUG] Exception during click/wait: {e}")
-    finally:
-        page.remove_listener("response", handle_response)
-
-    return captured["data"]
-
-
-# نفس فكرة الزرار - أكتر من data-testid محتمل حسب نوع الإعلان
 DESCRIPTION_SELECTORS = [
     '[data-testid="description"]',
     '[data-testid="description-heading"]',
 ]
 
-# أي نوع action بيطابق النمط ده (property, motors, jobs، إلخ) فيه بيانات الـ listing الكاملة
-DETAIL_ACTION_PATTERN = re.compile(r"^listings/detail\w*Request/fulfilled$")
-
-
-def extract_full_listing_payload(page, html):
-    """
-    بتطلع الـ payload الكامل بتاع الإعلان من __NEXT_DATA__ أو __next_f__ chunks،
-    مستخدمة كـ fallback لما زرار الرقم مايرجعش phone_number (بنستخرج منها 'lister').
-    """
-    payload = None
-
-    try:
-        next_data_text = page.locator("#__NEXT_DATA__").text_content(timeout=5000)
-        next_data = json.loads(next_data_text)
-        actions = next_data["props"]["pageProps"].get("reduxWrapperActionsGIPP", [])
-        for action in actions:
-            if DETAIL_ACTION_PATTERN.match(action.get("type", "")):
-                payload = action["payload"]
-                break
-    except Exception:
-        pass
-
-    if payload is None:
-        chunks = re.findall(
-            r'self\.__next_f\.push\(\[1,\s*"((?:[^"\\]|\\.)*)"\]\)',
-            html,
-        )
-        if chunks:
-            full_text = "".join(c.encode().decode("unicode_escape") for c in chunks)
-            match = re.search(r'listings/detail\w*Request/fulfilled', full_text)
-            if match:
-                idx = match.start()
-                payload_start = full_text.find('"payload"', idx)
-                if payload_start == -1:
-                    payload_start = full_text.find("{", idx)
-                brace_start = full_text.find("{", payload_start)
-                depth = 0
-                end = None
-                for i in range(brace_start, len(full_text)):
-                    if full_text[i] == "{":
-                        depth += 1
-                    elif full_text[i] == "}":
-                        depth -= 1
-                        if depth == 0:
-                            end = i + 1
-                            break
-                if end is not None:
-                    payload = json.loads(full_text[brace_start:end])
-
-    return payload
-
-
 def _extract_description(page):
-    """يطلع نص الـ description كامل من الصفحة، بيدور على أكتر من selector محتمل."""
     for selector in DESCRIPTION_SELECTORS:
         try:
             loc = page.locator(selector).first
@@ -274,20 +155,14 @@ def _extract_description(page):
     return None
 
 
-def enrich_with_contact_and_description(
+def enrich_with_description(
     df: pd.DataFrame,
     url_column: str = "absolute_url",
     headless: bool = True,
     min_delay: float = 5,
     max_delay: float = 12,
 ) -> pd.DataFrame:
-    """
-    بتفتح كل رابط في df[url_column]، تضغط زرار إظهار الرقم، وتمسك contact_info
-    كامل (dict فيه phone_number, full_name, date_joined, إلخ) + الـ description
-    الكامل من الصفحة. بترجع نفس الـ df بعد إضافة عمودين: contact_info و description_full.
-    """
     df = df.copy()
-    contact_info_col = [None] * len(df)
     description_col = [None] * len(df)
 
     with Stealth().use_sync(sync_playwright()) as p:
@@ -315,36 +190,7 @@ def enrich_with_contact_and_description(
                     print("    -> Imperva challenge hit, stopping enrichment.")
                     break
 
-                contact_info_col[pos] = _reveal_contact_info(page)
                 description_col[pos] = _extract_description(page)
-
-                has_phone = (
-                    isinstance(contact_info_col[pos], dict)
-                    and contact_info_col[pos].get("phone_number")
-                )
-
-                if not has_phone:
-                    # لقطة شاشة تتحفظ عشان نرفعها كـ artifact ونشخص المشكلة على CI
-                    try:
-                        page.screenshot(path=f"debug_no_phone_{pos}.png", full_page=True)
-                    except Exception:
-                        pass
-
-                    # مفيش رقم تليفون فعلي للمنتج - نرجع للـ full listing payload
-                    # ونجيب منه 'lister' كـ fallback بدل ما العمود يفضل فاضي
-                    full_payload = extract_full_listing_payload(page, html)
-                    lister = (full_payload or {}).get("lister")
-                    if lister:
-                        contact_info_col[pos] = {
-                            "source": "lister_fallback",
-                            **lister,
-                        }
-                        print("    -> No phone number available, used lister fallback")
-
-                phone = None
-                if isinstance(contact_info_col[pos], dict):
-                    phone = contact_info_col[pos].get("phone_number")
-                print(f"    -> phone: {phone}")
 
             except Exception as e:
                 print(f"    -> FAILED: {e}")
@@ -355,13 +201,8 @@ def enrich_with_contact_and_description(
 
         page.close()
         browser.close()
-
-    df["contact_info"] = contact_info_col
     df["description_full"] = description_col
     return df
-
-
-# ------------------------------------------------------------------
 
 
 def download_images(images: list, slug: str = "", category: str = "", id_prod: str = "",
@@ -633,7 +474,7 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
 
     if enrich_contact_details and "absolute_url" in df.columns:
         print(f"  Enriching {len(df)} rows with contact_info + description_full...")
-        df = enrich_with_contact_and_description(df)
+        df = enrich_with_description(df)
 
     total = len(df)
     excel_files = []
