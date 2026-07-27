@@ -28,7 +28,6 @@ COLUMNS_TO_DROP = [
     "category", "permalink"
 ]
 
-# ترتيب الأولوية للزرار: data-testid الثابت الأول، وبعده fallback بالنص
 PHONE_BUTTON_SELECTORS = [
     '[data-testid="call-cta-button"]',
     'button:has-text("Show Phone Number")',

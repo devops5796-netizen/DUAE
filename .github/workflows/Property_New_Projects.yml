@@ -1,8 +1,8 @@
-name: Property New Projects Scraper
+name: Property New Projects
 
 on:
   workflow_run:
-    workflows: ["Motors, Classifieds & Community Scraper"]
+    workflows: ["Motors"]
     types:
       - completed
   workflow_dispatch:
