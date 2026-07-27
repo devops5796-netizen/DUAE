@@ -92,6 +92,7 @@ jobs:
           path: |
             new_projects_${{ matrix.start }}_${{ matrix.end }}.jsonl
             new_projects_${{ matrix.start }}_${{ matrix.end }}_failed.txt
+            request_stats_${{ matrix.start }}_${{ matrix.end }}.json
           if-no-files-found: ignore
 
   merge_batch:
@@ -152,7 +153,16 @@ jobs:
               json.dump({"page_start": page_start, "page_end": page_end,
                          "total_pages_in_batch": page_end - page_start + 1,
                          "failed_pages": sorted(failed_pages)}, f)
+
+          # copy this batch's request_stats files into output/ so they ride
+          # along with the batch-new_projects-* artifact to final_merge
+          import shutil
+          for stats_file in glob.glob('raw_parts/request_stats_*.json'):
+              m2 = re.search(r'request_stats_(\d+)_(\d+)\.json$', stats_file)
+              if m2 and int(m2.group(1)) <= page_end and int(m2.group(2)) >= page_start:
+                  shutil.copy(stats_file, f"output/_stats_{page_start}_{page_end}.json")
           EOF
+
       - uses: actions/upload-artifact@v4
         with:
           name: batch-new_projects-${{ matrix.batch_index }}
@@ -189,7 +199,7 @@ jobs:
           import boto3
           import pandas as pd
 
-          from datetime import datetime
+          from datetime import datetime, timedelta, timezone
           from collections import defaultdict
 
 
@@ -198,13 +208,7 @@ jobs:
           # ============================================================
 
           dt = datetime.now()
-
-          date_prefix = (
-              f"year={dt.year}/"
-              f"month={dt.strftime('%m')}/"
-              f"day={dt.strftime('%d')}"
-          )
-
+          date_prefix = ( f"year={dt.year}/month={dt.strftime('%m')}/day={dt.strftime('%d')}")
           client = boto3.client(
               's3',
               endpoint_url=os.environ['CF_R2_ENDPOINT_URL'],
@@ -212,402 +216,284 @@ jobs:
               aws_secret_access_key=os.environ['CF_R2_SECRET_ACCESS_KEY'],
               region_name='auto'
           )
-
           bucket = os.environ['CF_R2_BUCKET_NAME']
 
-
-          # ============================================================
           # FIND ALL BATCH DIRECTORIES
-          # ============================================================
-
           batch_dirs = glob.glob('batches/batch-new_projects-*')
-
           print(f"Found {len(batch_dirs)} batch directories")
 
-
-          # ============================================================
           # COLLECT ALL FAILED PAGES
-          # ============================================================
-
           all_failed_pages = []
-
           for bd in batch_dirs:
               failed_files = glob.glob(
                   os.path.join(bd, "**", "_batch_failed_*.json"),
                   recursive=True
               )
-
               for failed_file in failed_files:
                   try:
                       with open(failed_file, "r", encoding="utf-8") as f:
                           data = json.load(f)
-
-                      all_failed_pages.extend(
-                          data.get("failed_pages", [])
-                      )
-
+                      all_failed_pages.extend(data.get("failed_pages", []))
                   except Exception as e:
-                      print(
-                          f"Failed to read {failed_file}: {e}"
-                      )
-
+                      print(f"Failed to read {failed_file}: {e}")
           all_failed_pages = sorted(set(all_failed_pages))
-
           print(
               f"Total unique failed pages: "
               f"{len(all_failed_pages)}"
           )
 
 
-          # ============================================================
+          # COLLECT REQUEST STATS FROM ALL BATCHES
+          def aggregate_request_stats(paths: list) -> dict:
+              total_requests = 0
+              total_duration_min = 0.0
+              for p in paths:
+                  try:
+                      with open(p, 'r', encoding='utf-8') as fh:
+                          s = json.load(fh)
+                      total_requests += s.get('total_requests', 0)
+                      total_duration_min += s.get('total_duration_min', 0) or 0
+                  except Exception as e:
+                      print(f"Could not read {p}: {e}")
+              requests_per_min = round(total_requests / total_duration_min, 2) if total_duration_min > 0 else total_requests
+              return {
+                  "requests_total": total_requests,
+                  "duration_sec": round(total_duration_min * 60, 2),
+                  "requests_per_min": requests_per_min,
+              }
+
+          stats_files = []
+          for bd in batch_dirs:
+              stats_files.extend(glob.glob(os.path.join(bd, "**", "_stats_*.json"), recursive=True))
+          request_metrics = aggregate_request_stats(stats_files)
+          print(f"Request metrics: {request_metrics['requests_total']} req, "
+                f"{request_metrics['requests_per_min']} req/min, {request_metrics['duration_sec']}s")
+
+
           # GROUP EXCEL FILES FROM ALL BATCHES
-          # ============================================================
-
           excel_groups = defaultdict(list)
-
           for bd in batch_dirs:
               for root, dirs, files in os.walk(bd):
                   for file in files:
-
                       if file.endswith('.xlsx'):
-
                           fp = os.path.join(root, file)
-
                           rel = os.path.relpath(fp, bd)
-
                           excel_groups[rel].append(fp)
 
 
-          # ============================================================
           # FINAL MERGE PER GROUP
-          # ============================================================
-
           for rel, files in excel_groups.items():
-
               print(f"\nProcessing group: {rel}")
-
               combined = defaultdict(list)
-
-              # --------------------------------------------------------
               # Read all Excel batches
-              # --------------------------------------------------------
-
               for bf in files:
-
                   xl = pd.ExcelFile(bf)
-
                   for sheet in xl.sheet_names:
-
-                      combined[sheet].append(
-                          xl.parse(sheet)
-                      )
+                      combined[sheet].append(xl.parse(sheet))
 
 
-              # --------------------------------------------------------
               # Merge sheets
-              # --------------------------------------------------------
-
               final_sheets = {}
-
               for sheet, dfs in combined.items():
-
-                  merged = pd.concat(
-                      dfs,
-                      ignore_index=True
-                  )
-
+                  merged = pd.concat(dfs, ignore_index=True )
                   if 'slug' in merged.columns:
-
-                      merged = merged.drop_duplicates(
-                          subset=['slug'],
-                          keep='first'
-                      )
-
+                      merged = merged.drop_duplicates( subset=['slug'], keep='first' )
                   final_sheets[sheet] = merged
 
-
-              # ========================================================
               # EXCEL
-              # ========================================================
-
-              local_xlsx = os.path.join(
-                  "final_output",
-                  rel
-              )
-
-              os.makedirs(
-                  os.path.dirname(local_xlsx),
-                  exist_ok=True
-              )
-
-              with pd.ExcelWriter(
-                  local_xlsx,
-                  engine="openpyxl"
-              ) as writer:
-
+              local_xlsx = os.path.join( "final_output", rel )
+              os.makedirs(os.path.dirname(local_xlsx), exist_ok=True)
+              with pd.ExcelWriter(local_xlsx, engine="openpyxl") as writer:
                   for sheet_name, df in final_sheets.items():
+                      df.to_excel( writer, sheet_name=sheet_name, index=False)
 
-                      df.to_excel(
-                          writer,
-                          sheet_name=sheet_name,
-                          index=False
-                      )
-
-
-              # ========================================================
               # JSON
-              # ========================================================
-
-              json_rel = (
-                  rel
-                  .replace(
-                      f"{os.sep}excel{os.sep}",
-                      f"{os.sep}json{os.sep}"
-                  )
-                  .replace(
-                      ".xlsx",
-                      ".json"
-                  )
-              )
-
-              local_json = os.path.join(
-                  "final_output",
-                  json_rel
-              )
-
-              os.makedirs(
-                  os.path.dirname(local_json),
-                  exist_ok=True
-              )
-
+              json_rel = (rel
+                  .replace( f"{os.sep}excel{os.sep}", f"{os.sep}json{os.sep}")
+                  .replace(".xlsx", ".json"))
+              local_json = os.path.join( "final_output", json_rel )
+              os.makedirs(os.path.dirname(local_json), exist_ok=True)
               all_records = []
-
               for sheet_name, df in final_sheets.items():
-
-                  records = df.to_dict(
-                      orient="records"
-                  )
-
+                  records = df.to_dict(orient="records")
                   for record in records:
                       record["_sheet"] = sheet_name
-
                   all_records.extend(records)
+              with open(local_json, "w", encoding="utf-8") as f:
+                  json.dump(all_records, f, ensure_ascii=False, indent=2, default=str)
+              group_base_rel = os.path.dirname(os.path.dirname(rel))
+
+              # SUMMARY.JSON
+              summary_rel = os.path.join(group_base_rel, "summary", "summary.json")
+              local_summary = os.path.join("final_output", summary_rel)
+              os.makedirs(os.path.dirname(local_summary), exist_ok=True)
+              total_rows = sum(len(df) for df in final_sheets.values())
+              dt_utc = datetime.now(timezone.utc)
+              summary_data = {
+                  "scraped_at": dt_utc.isoformat(),
+                  "data_scraped_date": (dt_utc - timedelta(days=1)).strftime("%Y-%m-%d"),
+                  "saved_to_R2_date": dt_utc.strftime("%Y-%m-%d"),
+                  "total_subcategories": len(final_sheets),
+                  "total_listings": total_rows,
+                  "subcategories": [
+                      {
+                          "name_ar": "",
+                          "name_en": sheet_name,
+                          "slug": sheet_name,
+                          "listings_count": len(df),
+                          "has_subcategories": False,
+                          "subcategories": [],
+                      }
+                      for sheet_name, df in final_sheets.items()
+                  ],
+              }
+              with open(local_summary, "w", encoding="utf-8") as f:
+                  json.dump(summary_data, f, ensure_ascii=False, indent=2)
 
 
-              with open(
-                  local_json,
-                  "w",
-                  encoding="utf-8"
-              ) as f:
-
-                  json.dump(
-                      all_records,
-                      f,
-                      ensure_ascii=False,
-                      indent=2,
-                      default=str
-                  )
-
-
-              # ========================================================
-              # GET GROUP BASE PATH
-              #
-              # Example:
-              #
-              # Dubai/Property/Property_for_Sale/
-              # new_projects/excel/new_projects.xlsx
-              #
-              # becomes:
-              #
-              # Dubai/Property/Property_for_Sale/new_projects
-              # ========================================================
-
-              group_base_rel = os.path.dirname(
-                  os.path.dirname(rel)
-              )
+              # FAILED.JSON
+              failed_rel = os.path.join(group_base_rel, "summary", "failed.json")
+              local_failed = os.path.join("final_output", failed_rel)
+              total_scraped = total_rows
+              total_attempted = total_scraped + len(all_failed_pages)
+              failed_pct = round(len(all_failed_pages) / total_attempted * 100, 2) if total_attempted > 0 else 0
+              failed_data = {
+                  "total_failed": len(all_failed_pages),
+                  "failed_percentage": failed_pct,
+                  "failed_pages": all_failed_pages,
+              }
+              with open(local_failed, "w", encoding="utf-8") as f:
+                  json.dump(failed_data, f, ensure_ascii=False, indent=2)
 
 
-              # ========================================================
-              # SUMMARY.TXT
-              # ========================================================
-
-              summary_rel = os.path.join(
-                  group_base_rel,
-                  "summary",
-                  "summary.txt"
-              )
-
-              local_summary = os.path.join(
-                  "final_output",
-                  summary_rel
-              )
-
-              os.makedirs(
-                  os.path.dirname(local_summary),
-                  exist_ok=True
-              )
+              # REQUEST_METRICS.JSON
+              metrics_rel = os.path.join(group_base_rel, "summary", "request_metrics.json")
+              local_metrics = os.path.join("final_output", metrics_rel)
+              with open(local_metrics, "w", encoding="utf-8") as f:
+                  json.dump(request_metrics, f, ensure_ascii=False, indent=2)
 
 
-              total_rows = sum(
-                  len(df)
-                  for df in final_sheets.values()
-              )
-
-
-              with open(
-                  local_summary,
-                  "w",
-                  encoding="utf-8"
-              ) as f:
-
-                  f.write(
-                      "=== new_projects ===\n"
-                  )
-
-                  f.write(
-                      f"Total Rows: {total_rows}\n"
-                  )
-
-                  f.write(
-                      f"Total Sheets: "
-                      f"{len(final_sheets)}\n"
-                  )
-
-                  f.write(
-                      f"Failed Pages: "
-                      f"{len(all_failed_pages)}\n"
-                  )
-
-                  f.write(
-                      "Generated at: "
-                      f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-                  )
-
-
-              # ========================================================
-              # FAILED_NEW_PROJECTS.TXT
-              # ========================================================
-
-              failed_rel = os.path.join(
-                  group_base_rel,
-                  "summary",
-                  "failed_new_projects.txt"
-              )
-
-              local_failed = os.path.join(
-                  "final_output",
-                  failed_rel
-              )
-
-
-              with open(
-                  local_failed,
-                  "w",
-                  encoding="utf-8"
-              ) as f:
-
-                  f.write(
-                      "=== Failed New Projects Pages ===\n"
-                  )
-
-                  f.write(
-                      f"Total Failed Pages: "
-                      f"{len(all_failed_pages)}\n\n"
-                  )
-
-                  for page in all_failed_pages:
-
-                      f.write(
-                          f"page={page}\n"
-                      )
-
-
-              # ========================================================
               # UPLOAD EXCEL
-              # ========================================================
+              excel_r2_key = (f"DUAE/{date_prefix}/{rel.replace(os.sep, '/')}")
+              client.upload_file(local_xlsx, bucket, excel_r2_key,
+                  ExtraArgs={'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
 
-              excel_r2_key = (
-                  f"DUAE/{date_prefix}/"
-                  f"{rel.replace(os.sep, '/')}"
-              )
-
-              client.upload_file(
-                  local_xlsx,
-                  bucket,
-                  excel_r2_key,
-                  ExtraArgs={
-                      'ContentType':
-                      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                  }
-              )
-
-
-              # ========================================================
               # UPLOAD JSON
-              # ========================================================
+              json_r2_key = (f"DUAE/{date_prefix}/{json_rel.replace(os.sep, '/')}")
+              client.upload_file(local_json, bucket, json_r2_key,
+                  ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
 
-              json_r2_key = (
-                  f"DUAE/{date_prefix}/"
-                  f"{json_rel.replace(os.sep, '/')}"
-              )
-
-              client.upload_file(
-                  local_json,
-                  bucket,
-                  json_r2_key,
-                  ExtraArgs={
-                      'ContentType':
-                      'application/json; charset=utf-8'
-                  }
-              )
-
-
-              # ========================================================
               # UPLOAD SUMMARY
-              # ========================================================
+              summary_r2_key = f"DUAE/{date_prefix}/{summary_rel.replace(os.sep, '/')}"
+              client.upload_file(local_summary, bucket, summary_r2_key,
+                  ExtraArgs={ 'ContentType': 'application/json; charset=utf-8'})
 
-              summary_r2_key = (
-                  f"DUAE/{date_prefix}/"
-                  f"{summary_rel.replace(os.sep, '/')}"
-              )
-
-              client.upload_file(
-                  local_summary,
-                  bucket,
-                  summary_r2_key,
-                  ExtraArgs={
-                      'ContentType':
-                      'text/plain; charset=utf-8'
-                  }
-              )
-
-
-              # ========================================================
               # UPLOAD FAILED FILE
-              # ========================================================
+              failed_r2_key = f"DUAE/{date_prefix}/{failed_rel.replace(os.sep, '/')}"
+              client.upload_file( local_failed, bucket, failed_r2_key,
+                  ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
 
-              failed_r2_key = (
-                  f"DUAE/{date_prefix}/"
-                  f"{failed_rel.replace(os.sep, '/')}"
-              )
+              # UPLOAD REQUEST METRICS
+              metrics_r2_key = f"DUAE/{date_prefix}/{metrics_rel.replace(os.sep, '/')}"
+              client.upload_file(local_metrics, bucket, metrics_r2_key, 
+                    ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
 
-              client.upload_file(
-                  local_failed,
-                  bucket,
-                  failed_r2_key,
-                  ExtraArgs={
-                      'ContentType':
-                      'text/plain; charset=utf-8'
-                  }
-              )
-
-
-              print(f"Uploaded Excel:  {excel_r2_key}")
-              print(f"Uploaded JSON:   {json_r2_key}")
+              print(f"Uploaded Excel:   {excel_r2_key}")
+              print(f"Uploaded JSON:    {json_r2_key}")
               print(f"Uploaded Summary: {summary_r2_key}")
               print(f"Uploaded Failed:  {failed_r2_key}")
+              print(f"Uploaded Metrics: {metrics_r2_key}")
 
           EOF
+
+      - name: Compress images and cleanup
+        env:
+          CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
+          CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
+        run: |
+          python << 'EOF'
+          import os
+          import boto3
+          import zipfile
+          from datetime import datetime
+          from collections import defaultdict
+
+          dt = datetime.now()
+          date_prefix = f"year={dt.year}/month={dt.strftime('%m')}/day={dt.strftime('%d')}"
+
+          client = boto3.client('s3',
+              endpoint_url=os.environ['CF_R2_ENDPOINT_URL'],
+              aws_access_key_id=os.environ['CF_R2_ACCESS_KEY_ID'],
+              aws_secret_access_key=os.environ['CF_R2_SECRET_ACCESS_KEY'],
+              region_name='auto'
+          )
+          bucket = os.environ['CF_R2_BUCKET_NAME']
+
+          base_prefix = f"DUAE/{date_prefix}/"
+
+          all_image_keys = []
+          paginator = client.get_paginator('list_objects_v2')
+          for page in paginator.paginate(Bucket=bucket, Prefix=base_prefix):
+              for obj in page.get('Contents', []):
+                  key = obj['Key']
+                  if '/images/' in key and not key.endswith('.zip'):
+                      all_image_keys.append(key)
+
+          if not all_image_keys:
+              print("No images found to compress for new_projects")
+              exit(0)
+
+          images_by_folder = defaultdict(list)
+          for key in all_image_keys:
+              folder = key.rsplit('/', 1)[0]
+              images_by_folder[folder].append(key)
+
+          print(f"Found {len(images_by_folder)} image folders to compress for new_projects")
+
+          for folder, keys in images_by_folder.items():
+              print(f"  Compressing {len(keys)} images in {folder}...")
+
+              local_dir = os.path.join("temp_images", folder.replace('/', '_'))
+              os.makedirs(local_dir, exist_ok=True)
+
+              local_files = []
+              for key in keys:
+                  filename = key.rsplit('/', 1)[-1]
+                  local_path = os.path.join(local_dir, filename)
+                  try:
+                      client.download_file(bucket, key, local_path)
+                      local_files.append((local_path, filename))
+                  except Exception as e:
+                      print(f"    [ERROR] Failed to download {key}: {e}")
+
+              if not local_files:
+                  print(f"    No files downloaded, skipping folder.")
+                  continue
+
+              zip_local_path = os.path.join("temp_images", f"{folder.replace('/', '_')}.zip")
+              with zipfile.ZipFile(zip_local_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+                  for local_path, filename in local_files:
+                      zf.write(local_path, arcname=filename)
+
+              zip_r2_key = f"{folder}/images.zip"
+              client.upload_file(zip_local_path, bucket, zip_r2_key,
+                  ExtraArgs={'ContentType': 'application/zip'})
+              print(f"    Uploaded zip: {zip_r2_key} ({len(local_files)} images)")
+
+              delete_objects = [{'Key': k} for k in keys]
+              for i in range(0, len(delete_objects), 1000):
+                  chunk = delete_objects[i:i+1000]
+                  client.delete_objects(Bucket=bucket, Delete={'Objects': chunk})
+              print(f"    Deleted {len(keys)} individual images from {folder}")
+
+              for local_path, _ in local_files:
+                  os.remove(local_path)
+              os.remove(zip_local_path)
+
+          print("\nDONE: Compressed images for new_projects")
+          EOF  
 
   trigger_next:
     runs-on: ubuntu-latest
@@ -615,7 +501,6 @@ jobs:
     if: ${{ success() }}
     steps:
       - name: Trigger Rent Property workflow
-
         run: |
             curl -X POST \
             -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \

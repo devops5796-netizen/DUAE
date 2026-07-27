@@ -8,6 +8,7 @@ import random
 import time
 import requests as req
 from PIL import Image
+from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from r2_uploader import upload_buffer
 from datetime import datetime
@@ -347,6 +348,34 @@ def split_used_cars(df: pd.DataFrame) -> dict:
     }
 
 
+def build_group_summary(sheets: dict, group_df: pd.DataFrame, city: str, cat0: str, cat1: str, dt: datetime) -> dict:
+    """
+    Same top-level shape as the shared summary.json format. `subcategories`
+    here maps to this group's Excel sheets (manufacturers for car
+    categories, or extract_sheet_name() subcategories otherwise).
+    """
+    subcategories = [
+        {
+            "name_ar": "",
+            "name_en": name,
+            "slug": name,
+            "listings_count": len(sdf),
+            "has_subcategories": False,
+            "subcategories": [],
+        }
+        for name, sdf in sheets.items()
+    ]
+    return {
+        "scraped_at": dt.isoformat(),
+        "data_scraped_date": (dt - timedelta(days=1)).strftime("%Y-%m-%d"),
+        "saved_to_R2_date": dt.strftime("%Y-%m-%d"),
+        "city": city,
+        "category": f"{cat0}/{cat1}",
+        "total_subcategories": len(subcategories),
+        "total_listings": len(group_df),
+        "subcategories": subcategories,
+    }
+
 def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: str,
                         upload_images: bool, image_workers: int) -> dict:
     if df.empty:
@@ -400,39 +429,26 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
                 lambda n: n[3] if len(n) > 3 else "Unknown"
             )
 
-            main_xlsx = os.path.join(excel_dir, f"{safe_cat1}.xlsx")
-            sheets = {}
-            for manufacturer, m_df in group_df.groupby("_manufacturer"):
-                cols_to_drop = ["_manufacturer", "_model", "_city", "_cat0", "_cat1", "_names_en"]
-                m_df_clean = m_df.drop(columns=[c for c in cols_to_drop if c in m_df.columns])
-                safe_mfr = sanitize_name(manufacturer)
-                sheets[safe_mfr] = m_df_clean
-
-            xlsx_path, json_path = _write_excel_and_json(sheets, main_xlsx)
-            excel_files.append(xlsx_path)
-            json_files.append(json_path)
-            print(f"    Saved main: {main_xlsx} ({len(group_df)} rows)")
-
-            by_mfr_dir = os.path.join(excel_dir, "by_manufacturer")
-            by_mfr_json_dir = os.path.join(json_dir, "by_manufacturer")
-            os.makedirs(by_mfr_dir, exist_ok=True)
-            os.makedirs(by_mfr_json_dir, exist_ok=True)
-
+            # No combined main file -- each manufacturer's file goes straight
+            # into excel/ and json/, split into one sheet per model.
+            sheets = {}  # manufacturer -> full df, kept for summary.json counts
             for manufacturer, m_df in group_df.groupby("_manufacturer"):
                 safe_mfr = sanitize_name(manufacturer)
-                mfr_xlsx = os.path.join(by_mfr_dir, f"{safe_mfr}.xlsx")
+                mfr_xlsx = os.path.join(excel_dir, f"{safe_mfr}.xlsx")
 
-                sheets = {}
+                model_sheets = {}
                 for model, model_df in m_df.groupby("_model"):
                     cols_to_drop = ["_manufacturer", "_model", "_city", "_cat0", "_cat1", "_names_en"]
                     model_df_clean = model_df.drop(columns=[c for c in cols_to_drop if c in model_df.columns])
                     safe_model = sanitize_name(model)[:31]
-                    sheets[safe_model] = model_df_clean
+                    model_sheets[safe_model] = model_df_clean
 
-                xlsx_path, json_path = _write_excel_and_json(sheets, mfr_xlsx)
+                xlsx_path, json_path = _write_excel_and_json(model_sheets, mfr_xlsx)
                 excel_files.append(xlsx_path)
                 json_files.append(json_path)
-                print(f"    Saved by manufacturer: {mfr_xlsx} ({len(m_df)} rows)")
+                print(f"    Saved: {mfr_xlsx} ({len(m_df)} rows, {len(model_sheets)} model(s))")
+
+                sheets[safe_mfr] = m_df
 
         else:
             group_df = group_df.copy()
@@ -451,16 +467,12 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
             json_files.append(json_path)
             print(f"  Saved main: {main_xlsx} ({len(group_df)} rows)")
 
-        summary_file_path = os.path.join(summary_dir, "summary.txt")
+        dt = datetime.now(timezone.utc)
+        summary = build_group_summary(sheets, group_df, safe_city, safe_cat0, safe_cat1, dt)
+        summary_file_path = os.path.join(summary_dir, "summary.json")
         with open(summary_file_path, "w", encoding="utf-8") as f:
-            f.write(f"=== {category_name} ===\n")
-            f.write(f"City: {safe_city}\n")
-            f.write(f"Category: {safe_cat0}/{safe_cat1}\n")
-            f.write(f"Total Rows: {len(group_df)}\n")
-            f.write(f"Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(group_quality_report)
-
-        print(f"  Saved summary: {summary_file_path}")
+            json.dump(summary, f, ensure_ascii=False, indent=2)
+        print(f"  Saved summary: {summary_file_path} ({summary['total_subcategories']} subcats, {summary['total_listings']} listings)")
 
     return {"excel_files": excel_files, "json_files": json_files}
 

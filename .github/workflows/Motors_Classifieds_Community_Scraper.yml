@@ -157,6 +157,7 @@ jobs:
             ${{ matrix.category }}_${{ matrix.start }}_${{ matrix.end }}.jsonl
             ${{ matrix.category }}_${{ matrix.start }}_${{ matrix.end }}_failed.txt
             ${{ matrix.category }}_${{ matrix.start }}_${{ matrix.end }}_result.json
+            request_stats_${{ matrix.start }}_${{ matrix.end }}.json
           if-no-files-found: ignore
 
   merge:
@@ -333,10 +334,10 @@ jobs:
                   ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
               print(f"Uploaded JSON: {r2_key}")
 
-          # Upload summary.txt files
+          # Upload summary
           for root, dirs, files in os.walk('output'):
               for file in files:
-                  if file == 'summary.txt':
+                  if file == 'summary.json':
                       local_path = os.path.join(root, file)
                       relative_path = os.path.relpath(local_path, output_base)
                       parts = relative_path.split(os.sep)
@@ -344,49 +345,45 @@ jobs:
                           city = parts[0]
                           cat0 = parts[1]
                           cat1 = parts[2]
-                          r2_key = f"DUAE/{date_prefix}/{city}/{cat0}/{cat1}/summary/summary.txt"
+                          r2_key = f"DUAE/{date_prefix}/{city}/{cat0}/{cat1}/summary/summary.json"
                           client.upload_file(local_path, bucket, r2_key,
-                              ExtraArgs={'ContentType': 'text/plain; charset=utf-8'})
+                              ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
                           print(f"Uploaded summary: {r2_key}")
 
 
-          failed_content_lines = []
-          failed_content_lines.append(f"=== {category} ===\n")
-          failed_content_lines.append(f"Total Pages Attempted: {total_pages}\n")
-          failed_content_lines.append(f"Total Failed Pages: {len(failed_pages)}\n")
-          failed_content_lines.append(f"Failed Percentage: {failed_percentage:.2f}%\n")
-          failed_content_lines.append(f"Success Rate: {100 - failed_percentage:.2f}%\n")
-          failed_content_lines.append("\n" + "="*50 + "\n")
-          failed_content_lines.append("Failed Pages Details:\n")
-          failed_content_lines.append("="*50 + "\n")
+          # ---- failed.json + request_metrics.json (replaces the .txt failed report) ----
+          def aggregate_request_stats(stats_glob):
+              total_requests = 0
+              total_duration_min = 0.0
+              for f in glob.glob(stats_glob):
+                  with open(f, 'r', encoding='utf-8') as fh:
+                      stats = json.load(fh)
+                  total_requests += stats.get('total_requests', 0)
+                  total_duration_min += stats.get('total_duration_min', 0) or 0
+              requests_per_min = round(total_requests / total_duration_min, 2) if total_duration_min > 0 else total_requests
+              return {
+                  "requests_total": total_requests,
+                  "duration_sec": round(total_duration_min * 60, 2),
+                  "requests_per_min": requests_per_min,
+              }
 
-          if failed_pages:
-              failed_pages.sort()
-              failed_content_lines.append(f"Pages: {', '.join(map(str, failed_pages))}\n")
-              failed_content_lines.append("\nFailure Distribution:\n")
-
-              consecutive_groups = []
-              current_group = [failed_pages[0]]
-              for i in range(1, len(failed_pages)):
-                  if failed_pages[i] == failed_pages[i-1] + 1:
-                      current_group.append(failed_pages[i])
-                  else:
-                      consecutive_groups.append(current_group)
-                      current_group = [failed_pages[i]]
-              consecutive_groups.append(current_group)
-
-              for group in consecutive_groups:
-                  if len(group) == 1:
-                      failed_content_lines.append(f"  Page {group[0]}\n")
-                  else:
-                      failed_content_lines.append(f"  Pages {group[0]}-{group[-1]} (consecutive {len(group)} pages)\n")
-          else:
-              failed_content_lines.append("No failed pages! All pages scraped successfully.\n")
-
-          failed_content = "".join(failed_content_lines)
-          local_failed_file = f"failed_{category}.txt"
+          failed_pages.sort()
+          failed_report = {
+              "category": category,
+              "total_pages_attempted": total_pages,
+              "total_failed": len(failed_pages),
+              "failed_percentage": round(failed_percentage, 2),
+              "failed_pages": failed_pages,
+          }
+          local_failed_file = f"failed_{category}.json"
           with open(local_failed_file, "w", encoding="utf-8") as f:
-              f.write(failed_content)
+              json.dump(failed_report, f, ensure_ascii=False, indent=2)
+
+          metrics = aggregate_request_stats('raw_parts/request_stats_*.json')
+          local_metrics_file = f"request_metrics_{category}.json"
+          with open(local_metrics_file, "w", encoding="utf-8") as f:
+              json.dump(metrics, f, ensure_ascii=False, indent=2)
+          print(f"Metrics for {category}: {metrics['requests_total']} req, {metrics['requests_per_min']} req/min, {metrics['duration_sec']}s")
 
           summary_groups = set()
           for local_path in result["excel_files"]:
@@ -397,10 +394,15 @@ jobs:
                   summary_groups.add((city, cat0, cat1))
 
           for city, cat0, cat1 in summary_groups:
-              r2_key = f"DUAE/{date_prefix}/{city}/{cat0}/{cat1}/summary/failed_pages_{category}.txt"
-              client.upload_file(local_failed_file, bucket, r2_key,
-                  ExtraArgs={'ContentType': 'text/plain; charset=utf-8'})
-              print(f"Uploaded: {r2_key}")
+              failed_key = f"DUAE/{date_prefix}/{city}/{cat0}/{cat1}/summary/failed.json"
+              client.upload_file(local_failed_file, bucket, failed_key,
+                  ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
+              print(f"Uploaded: {failed_key}")
+
+              metrics_key = f"DUAE/{date_prefix}/{city}/{cat0}/{cat1}/summary/request_metrics.json"
+              client.upload_file(local_metrics_file, bucket, metrics_key,
+                  ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
+              print(f"Uploaded: {metrics_key}")
 
           print(f"\nDONE: {len(result['excel_files'])} excel + {len(result['json_files'])} json files uploaded for {category}")
           EOF

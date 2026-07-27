@@ -233,11 +233,12 @@ def get_page_with_retry(category: dict, page: int, max_retries: int = 3) -> dict
 
     for attempt in range(1, max_retries + 1):
         try:
-            tracker.log_request(source="product_detail") 
             r = requests.post(URL, params=PARAMS, json=payload, timeout=30)
             r.raise_for_status()
+            tracker.log_request(source="product_detail", success=True)
             return r.json()
         except Exception as e:
+            tracker.log_request(source="product_detail", success=False)
             print(f"  [Attempt {attempt}/{max_retries}] Page {page} failed: {e}")
             if attempt < max_retries:
                 wait_time = attempt * 2
@@ -313,7 +314,7 @@ def run(category_name: str, start_page: int, end_page: int, output_jsonl: str) -
             for p in failed_pages:
                 f.write(f"page={p}\n")
 
-    stats_file = f"request_stats_{start}_{end}.json"
+    stats_file = f"request_stats_{start_page}_{end_page}.json"
     stats = tracker.save(stats_file)
 
     print(f"\n--- Combined Request Stats ---")
