@@ -44,7 +44,7 @@ jobs:
           r = requests.post(URL, params=QUERY_PARAMS, headers=HEADERS, json=payload, timeout=30)
           data = r.json()
           nb_pages = data["results"][0]["nbPages"]
-          nb_pages = 2
+          #nb_pages = 2
           print(f"Total pages: {nb_pages}")
 
           ROWS_PER_BATCH = 2500
