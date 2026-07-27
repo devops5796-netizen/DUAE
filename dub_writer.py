@@ -229,7 +229,7 @@ def download_images(images: list, slug: str = "", category: str = "", id_prod: s
                 img = Image.open(io.BytesIO(r.content))
                 output_buffer = io.BytesIO()
                 img = img.convert("RGB")
-                img.save(output_buffer, format="WEBP", quality=100, method=6)
+                img.save(output_buffer, format="WEBP", quality=70, method=6)
                 output_buffer.seek(0)
 
                 r2_key = upload_buffer(
