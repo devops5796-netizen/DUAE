@@ -499,17 +499,15 @@ jobs:
                 zip_buffer,
                 bucket,
                 zip_r2_key,
-                ExtraArgs={
-                    "ContentType": "application/zip"
-                }
+                ExtraArgs={"ContentType": "application/zip"},
             )
-            print(f"    Uploaded zip: {zip_r2_key} ({uploaded_count} images)")
+            client.head_object(Bucket=bucket, Key=zip_r2_key)
+            print(f"Uploaded zip: {zip_r2_key}")
             delete_objects = [{"Key": k} for k in keys]
             for i in range(0, len(delete_objects), 1000):
-                chunk = delete_objects[i:i+1000]
                 client.delete_objects(
                     Bucket=bucket,
-                    Delete={"Objects": chunk},
+                    Delete={"Objects": delete_objects[i:i+1000]},
                 )
             print(f"    Deleted {len(keys)} individual images from {folder}")
             zip_buffer.close()
