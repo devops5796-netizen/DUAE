@@ -271,7 +271,7 @@ def enrich_agencies_with_phone(
 if __name__ == "__main__":
     start = 30
     end = 45
-    agencies_df = pd.read_csv("/content/property_agencies.csv")[start:end]
+    agencies_df = pd.read_csv("property_agencies.csv")[start:end]
 
     result_df = enrich_agencies_with_phone(agencies_df, max_new=100, checkpoint_path="agencies_checkpoint.xlsx")
 
