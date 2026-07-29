@@ -149,7 +149,7 @@ def enrich_agencies_with_phone(
 
     # Initializing Camoufox instead of standard Playwright + Stealth
     with Camoufox(
-        headless=False,
+        headless=True,
         humanize=True,
         geoip=True,
         block_images=False
