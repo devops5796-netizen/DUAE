@@ -1,0 +1,43 @@
+name: Phone Numbers
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libdbus-glib-1-2
+
+      - name: Install Camoufox browser
+        run: |
+          python -m camoufox fetch
+
+      - name: Run scraper
+        run: |
+          python scraper.py
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: agencies-phone-results
+          path: |
+            agencies_with_phone.xlsx
+            agencies_with_phone.csv
+            agencies_checkpoint.xlsx
