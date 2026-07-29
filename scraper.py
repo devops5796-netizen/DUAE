@@ -269,14 +269,29 @@ def enrich_agencies_with_phone(
 
 
 if __name__ == "__main__":
-    start = 90
-    end = 120
-    agencies_df = pd.read_csv("property_agencies.csv")[start:end]
+    import argparse
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--start",
+        type=int,
+        default=0
+    )
+
+    parser.add_argument(
+        "--end",
+        type=int,
+        default=15
+    )
+
+    args = parser.parse_args()
+    start = 60
+    end = 75
+    agencies_df = pd.read_csv("property_agencies.csv")[args.start:args.end]
 
     result_df = enrich_agencies_with_phone(agencies_df, max_new=100, checkpoint_path="agencies_checkpoint.xlsx")
 
-    result_df.to_excel(f"agencies_with_phone_{start}_{end}.xlsx", index=False)
-    result_df.to_csv(f"agencies_with_phone_{start}_{end}.csv", index=False, encoding="utf-8-sig")
+    result_df.to_csv(f"agencies_with_phone_{args.start}_{args.end}.csv", index=False, encoding="utf-8-sig")
 
     total = len(result_df)
     with_phone = result_df["contact_phone_number"].notna().sum()

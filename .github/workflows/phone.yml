@@ -1,4 +1,4 @@
-name: Phone Numbers
+name: Scrape Agency Phone Numbers
 
 on:
   workflow_dispatch:
@@ -7,6 +7,19 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
 
+    strategy:
+      max-parallel: 1
+      matrix:
+        include:
+        - start: 60
+          end: 75
+        - start: 75
+          end: 90
+        - start: 90
+          end: 105
+        - start: 105
+          end: 120
+      
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -25,19 +38,46 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-0 libdbus-glib-1-2
 
-      - name: Install Camoufox browser
+      - name: Install Camoufox
         run: |
           python -m camoufox fetch
 
       - name: Run scraper
         run: |
-          python scraper.py
+          python scraper.py \
+            --start ${{ matrix.start }} \
+            --end ${{ matrix.end }}
 
       - name: Upload results
         uses: actions/upload-artifact@v4
         with:
-          name: agencies-phone-results
+          name: agencies-${{ matrix.start }}-${{ matrix.end }}
           path: |
-            agencies_with_phone.xlsx
-            agencies_with_phone.csv
             agencies_checkpoint.xlsx
+            agencies_with_phone_${{ matrix.start }}_${{ matrix.end }}.csv
+  merge:
+    needs: scrape
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install pandas openpyxl
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: outputs
+
+      - name: Merge csv files
+        run: python merge.py
+
+      - name: Upload merged file
+        uses: actions/upload-artifact@v4
+        with:
+          name: merged-output
+          path: agencies_with_phone_all.csv
