@@ -225,7 +225,7 @@ def enrich_listings_with_phone(
             for attempt_num in range(2):
                 try:
                     page.goto(url, wait_until="domcontentloaded", timeout=45000)
-                    page.wait_for_timeout(random.uniform(10000, 15000))
+                    page.wait_for_timeout(random.uniform(6000, 1000))
 
                     html = _safe_content(page)
                     if _is_challenge_page(html):
@@ -315,6 +315,10 @@ if __name__ == "__main__":
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=15)
     parser.add_argument("--input", type=str, default="used_cars.xlsx")
+    parser.add_argument("--url-column", type=str, default="absolute_url")
+    parser.add_argument("--key-column", type=str, default="id")
+    parser.add_argument("--checkpoint-path", type=str, default="listings_checkpoint.xlsx")
+    parser.add_argument("--output-prefix", type=str, default="listings_with_phone")
     args = parser.parse_args()
 
     if args.input.lower().endswith((".xlsx", ".xls")):
@@ -324,12 +328,14 @@ if __name__ == "__main__":
 
     result_df = enrich_listings_with_phone(
         listings_df,
+        url_column=args.url_column,
+        key_column=args.key_column,
         max_new=100,
-        checkpoint_path="listings_checkpoint.xlsx",
+        checkpoint_path=args.checkpoint_path,
     )
 
     result_df.to_csv(
-        f"listings_with_phone_{args.start}_{args.end}.csv",
+        f"{args.output_prefix}_{args.start}_{args.end}.csv",
         index=False,
         encoding="utf-8-sig",
     )

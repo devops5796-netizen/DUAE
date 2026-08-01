@@ -18,6 +18,13 @@ from playwright_stealth import Stealth
 
 CAR_CATEGORIES = {"used_cars", "rental_cars"}
 
+# Long-edge cap (px) images are downscaled to before upload, plus the WEBP
+# quality used when re-encoding. Most source photos are 3000px+ wide;
+# capping the long edge is what actually cuts stored bytes -- quality alone
+# only goes so far.
+MAX_IMAGE_DIMENSION = 1280
+WEBP_QUALITY = 65
+
 CONDITION_FIELD = "car_condition"
 EXPORT_FIELD = "is_export_car"
 NEW_VALUE = "new"
@@ -206,7 +213,7 @@ def enrich_with_description(
 
 
 def download_images(images: list, slug: str = "", category: str = "", id_prod: str = "",
-                     city: str = "", cat0: str = "", cat1: str = "") -> list:
+                     cat0: str = "", cat1: str = "") -> list:
     r2_paths = []
     uploaded = 0
     failed = 0
@@ -226,9 +233,10 @@ def download_images(images: list, slug: str = "", category: str = "", id_prod: s
             r = req.get(img_url, timeout=15)
             if r.status_code == 200:
                 img = Image.open(io.BytesIO(r.content))
-                output_buffer = io.BytesIO()
                 img = img.convert("RGB")
-                img.save(output_buffer, format="WEBP", quality=70, method=6)
+                img.thumbnail((MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION), Image.LANCZOS)
+                output_buffer = io.BytesIO()
+                img.save(output_buffer, format="WEBP", quality=WEBP_QUALITY, method=6)
                 output_buffer.seek(0)
 
                 r2_key = upload_buffer(
@@ -239,7 +247,6 @@ def download_images(images: list, slug: str = "", category: str = "", id_prod: s
                     file_type="images",
                     content_type="image/webp",
                     dt=None,
-                    city=city,
                     category_display=category_display
                 )
                 if r2_key:
@@ -258,7 +265,7 @@ def download_images(images: list, slug: str = "", category: str = "", id_prod: s
     return r2_paths
 
 
-def process_images_for_group(df: pd.DataFrame, category: str, city: str, cat0: str, cat1: str,
+def process_images_for_group(df: pd.DataFrame, category: str, cat0: str, cat1: str,
                               workers: int = 2) -> pd.DataFrame:
     df = df.copy()
     n = len(df)
@@ -267,7 +274,7 @@ def process_images_for_group(df: pd.DataFrame, category: str, city: str, cat0: s
     def worker(pos: int, images: list, slug: str, id_prod: str) -> tuple:
         r2_paths = download_images(
             images, slug=slug, category=category, id_prod=id_prod,
-            city=city, cat0=cat0, cat1=cat1
+            cat0=cat0, cat1=cat1
         )
         return pos, r2_paths
 
@@ -347,7 +354,7 @@ def split_used_cars(df: pd.DataFrame) -> dict:
     }
 
 
-def build_group_summary(sheets: dict, group_df: pd.DataFrame, city: str, cat0: str, cat1: str, dt: datetime) -> dict:
+def build_group_summary(sheets: dict, group_df: pd.DataFrame, cat0: str, cat1: str, dt: datetime) -> dict:
     """
     Same top-level shape as the shared summary.json format. `subcategories`
     here maps to this group's Excel sheets (manufacturers for car
@@ -368,7 +375,6 @@ def build_group_summary(sheets: dict, group_df: pd.DataFrame, city: str, cat0: s
         "scraped_at": dt.isoformat(),
         "data_scraped_date": (dt - timedelta(days=1)).strftime("%Y-%m-%d"),
         "saved_to_R2_date": dt.strftime("%Y-%m-%d"),
-        "city": city,
         "category": f"{cat0}/{cat1}",
         "total_subcategories": len(subcategories),
         "total_listings": len(group_df),
@@ -381,7 +387,6 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
         return {"excel_files": [], "json_files": []}
 
     df = df.copy()
-    df["_city"] = df["site"].apply(get_city_name)
     df["_names_en"] = df["category_v2"].apply(get_category_names)
     df["_cat0"] = df["_names_en"].apply(lambda n: n[0] if len(n) > 0 else "Unknown")
 
@@ -393,26 +398,25 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
     excel_files = []
     json_files = []
 
-    for (city, cat0, cat1), group_df in df.groupby(["_city", "_cat0", "_cat1"]):
-        safe_city = sanitize_name(city)
+    for (cat0, cat1), group_df in df.groupby(["_cat0", "_cat1"]):
         safe_cat0 = sanitize_name(cat0)
         safe_cat1 = sanitize_name(cat1)
 
         group_quality_report = generate_data_quality_report(group_df, len(group_df))
 
-        city_dir = os.path.join(output_base_dir, safe_city, safe_cat0, safe_cat1)
-        os.makedirs(city_dir, exist_ok=True)
+        cat_dir = os.path.join(output_base_dir, safe_cat0, safe_cat1)
+        os.makedirs(cat_dir, exist_ok=True)
 
         if upload_images and "photo_mains" in group_df.columns:
-            print(f"  Processing images for {safe_city}/{safe_cat0}/{safe_cat1} ({len(group_df)} products)...")
+            print(f"  Processing images for {safe_cat0}/{safe_cat1} ({len(group_df)} products)...")
             group_df = process_images_for_group(
-                group_df, category=category_name, city=safe_city,
+                group_df, category=category_name,
                 cat0=safe_cat0, cat1=safe_cat1, workers=image_workers
             )
 
-        excel_dir = os.path.join(city_dir, "excel")
-        json_dir = os.path.join(city_dir, "json")
-        summary_dir = os.path.join(city_dir, "summary")
+        excel_dir = os.path.join(cat_dir, "excel")
+        json_dir = os.path.join(cat_dir, "json")
+        summary_dir = os.path.join(cat_dir, "summary")
         os.makedirs(excel_dir, exist_ok=True)
         os.makedirs(json_dir, exist_ok=True)
         os.makedirs(summary_dir, exist_ok=True)
@@ -437,7 +441,7 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
 
                 model_sheets = {}
                 for model, model_df in m_df.groupby("_model"):
-                    cols_to_drop = ["_manufacturer", "_model", "_city", "_cat0", "_cat1", "_names_en"]
+                    cols_to_drop = ["_manufacturer", "_model", "_cat0", "_cat1", "_names_en"]
                     model_df_clean = model_df.drop(columns=[c for c in cols_to_drop if c in model_df.columns])
                     safe_model = sanitize_name(model)[:31]
                     model_sheets[safe_model] = model_df_clean
@@ -456,7 +460,7 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
             main_xlsx = os.path.join(excel_dir, f"{safe_cat1}.xlsx")
             sheets = {}
             for sheet_name, sdf in group_df.groupby("_sheet_name"):
-                cols_to_drop = ["_sheet_name", "_city", "_cat0", "_cat1", "_names_en"]
+                cols_to_drop = ["_sheet_name", "_cat0", "_cat1", "_names_en"]
                 sdf_clean = sdf.drop(columns=[c for c in cols_to_drop if c in sdf.columns])
                 safe_sheet = sanitize_name(sheet_name)[:31]
                 sheets[safe_sheet] = sdf_clean
@@ -467,7 +471,7 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
             print(f"  Saved main: {main_xlsx} ({len(group_df)} rows)")
 
         dt = datetime.now(timezone.utc)
-        summary = build_group_summary(sheets, group_df, safe_city, safe_cat0, safe_cat1, dt)
+        summary = build_group_summary(sheets, group_df, safe_cat0, safe_cat1, dt)
         summary_file_path = os.path.join(summary_dir, "summary.json")
         with open(summary_file_path, "w", encoding="utf-8") as f:
             json.dump(summary, f, ensure_ascii=False, indent=2)
@@ -478,7 +482,8 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
 
 def process_category(category_name: str, jsonl_files: list, output_base_dir: str,
                       upload_images: bool = True, image_workers: int = 2,
-                      enrich_contact_details: bool = False) -> dict:
+                      enrich_contact_details: bool = False,
+                      phone_lookup: dict = None) -> dict:
     df = load_all_hits(jsonl_files)
     if df.empty:
         return {"total": 0, "excel_files": [], "json_files": []}
@@ -486,6 +491,11 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
     if enrich_contact_details and "absolute_url" in df.columns:
         print(f"  Enriching {len(df)} rows with description_full...")
         df = enrich_with_description(df)
+
+    if phone_lookup and "id" in df.columns:
+        df["contact_phone_number"] = df["id"].astype(str).map(phone_lookup)
+        matched = df["contact_phone_number"].notna().sum()
+        print(f"  Matched phone numbers for {matched}/{len(df)} rows from phone_lookup")
 
     total = len(df)
     excel_files = []
