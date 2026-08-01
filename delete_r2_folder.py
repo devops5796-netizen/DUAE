@@ -11,7 +11,10 @@ BUCKET_NAME = os.getenv('CF_R2_BUCKET_NAME', '')
 
 # Folder you want to delete
 
-FOLDER = "DUAE"
+FOLDER = os.getenv("FOLDER")
+
+if not FOLDER:
+    raise ValueError("FOLDER environment variable is required")
 
 client = boto3.client(
     's3',
