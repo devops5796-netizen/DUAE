@@ -1,0 +1,78 @@
+name: Scrape Motors Listing Phone Numbers
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    strategy:
+      max-parallel: 1
+      matrix:
+        include:
+        - start: 0
+          end: 15
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libdbus-glib-1-2
+
+      - name: Install Camoufox
+        run: |
+          python -m camoufox fetch
+
+      - name: Run scraper
+        run: |
+          python enrich_listings_with_phone.py \
+            --start ${{ matrix.start }} \
+            --end ${{ matrix.end }} \
+            --input used_cars.csv
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: listings-${{ matrix.start }}-${{ matrix.end }}
+          path: |
+            listings_checkpoint.xlsx
+            listings_with_phone_${{ matrix.start }}_${{ matrix.end }}.csv
+  merge:
+    needs: scrape
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install pandas openpyxl
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: outputs
+
+      - name: Merge csv files
+        run: python merge.py
+
+      - name: Upload merged file
+        uses: actions/upload-artifact@v4
+        with:
+          name: merged-output
+          path: listings_with_phone_all.csv
