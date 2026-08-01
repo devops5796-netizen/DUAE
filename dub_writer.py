@@ -35,9 +35,9 @@ EXPORT_FIELD = "is_export_car"
 NEW_VALUE = "new"
 
 COLUMNS_TO_DROP = [
-    "photo", "photo_thumbnails", "photos", "_highlightResult",
+    "photo", "photo_mains", "photos", "_highlightResult",
     "site_categories_slug_tree", "category_slug_tree", "category_tree",
-    "category", "permalink"
+    "category", "permalink", "seo_links", "vas"
 ]
 
 PHONE_BUTTON_SELECTORS = [
@@ -477,6 +477,30 @@ def _write_deep_split(group_df: pd.DataFrame, excel_dir: str) -> tuple:
     return excel_files, json_files, sheets
 
 
+def convert_timestamp_columns(df: pd.DataFrame) -> pd.DataFrame:
+    timestamp_columns = [
+        "added",
+        "created_at",
+        "last_updated_at"
+    ]
+    df = df.copy()
+    for col in timestamp_columns:
+        if col in df.columns:
+            df[col] = (
+                pd.to_datetime(
+                    pd.to_numeric(df[col], errors="coerce"),
+                    unit="s",
+                    errors="coerce",
+                    utc=True
+                )
+                .dt.tz_convert("Asia/Dubai")
+                .dt.strftime("%Y-%m-%d %H:%M:%S")
+            )
+
+            print(f"  Converted timestamp column: {col}")
+
+    return df
+
 def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: str,
                         upload_images: bool, image_workers: int) -> dict:
     if df.empty:
@@ -549,8 +573,11 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
                       enrich_contact_details: bool = False,
                       phone_lookup: dict = None) -> dict:
     df = load_all_hits(jsonl_files)
+
     if df.empty:
         return {"total": 0, "excel_files": [], "json_files": []}
+
+    df = convert_timestamp_columns(df)
 
     if enrich_contact_details and "absolute_url" in df.columns:
         print(f"  Enriching {len(df)} rows with description_full...")
