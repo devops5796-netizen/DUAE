@@ -1,11 +1,12 @@
 name: Property New Projects
 
 on:
-  workflow_run:
-    workflows: ["Motors"]
-    types:
-      - completed
-  workflow_dispatch:
+    workflow_dispatch:
+#   workflow_run:
+#     workflows: ["Motors"]
+#     types:
+#       - completed
+  
 
 jobs:
   detect_merge_batches:
