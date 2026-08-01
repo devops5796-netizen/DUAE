@@ -30,7 +30,7 @@ EXPORT_FIELD = "is_export_car"
 NEW_VALUE = "new"
 
 COLUMNS_TO_DROP = [
-    "photo", "photo_thumbnails", "photos", "_highlightResult",
+    "photo", "photo_mains", "photos", "_highlightResult",
     "site_categories_slug_tree", "category_slug_tree", "category_tree",
     "category", "permalink"
 ]
@@ -233,10 +233,9 @@ def download_images(images: list, slug: str = "", category: str = "", id_prod: s
             r = req.get(img_url, timeout=15)
             if r.status_code == 200:
                 img = Image.open(io.BytesIO(r.content))
-                img = img.convert("RGB")
-                img.thumbnail((MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION), Image.LANCZOS)
                 output_buffer = io.BytesIO()
-                img.save(output_buffer, format="WEBP", quality=WEBP_QUALITY, method=6)
+                img = img.convert("RGB")
+                img.save(output_buffer, format="WEBP", quality=70, method=6)
                 output_buffer.seek(0)
 
                 r2_key = upload_buffer(
@@ -280,7 +279,7 @@ def process_images_for_group(df: pd.DataFrame, category: str, cat0: str, cat1: s
 
     tasks = []
     for pos, (idx, row) in enumerate(df.iterrows()):
-        images = row.get("photo_mains", [])
+        images = row.get("photo_thumbnails", [])
         id_prod = str(row.get("id", idx))
         slug = id_prod
         tasks.append((pos, images, slug, id_prod))
@@ -407,7 +406,7 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
         cat_dir = os.path.join(output_base_dir, safe_cat0, safe_cat1)
         os.makedirs(cat_dir, exist_ok=True)
 
-        if upload_images and "photo_mains" in group_df.columns:
+        if upload_images and "photo_thumbnails" in group_df.columns:
             print(f"  Processing images for {safe_cat0}/{safe_cat1} ({len(group_df)} products)...")
             group_df = process_images_for_group(
                 group_df, category=category_name,
