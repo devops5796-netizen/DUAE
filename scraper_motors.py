@@ -317,7 +317,10 @@ if __name__ == "__main__":
     parser.add_argument("--input", type=str, default="used_cars.xlsx")
     args = parser.parse_args()
 
-    listings_df = pd.read_csv(args.input)[args.start:args.end]
+    if args.input.lower().endswith((".xlsx", ".xls")):
+        listings_df = pd.read_excel(args.input)[args.start:args.end]
+    else:
+        listings_df = pd.read_csv(args.input)[args.start:args.end]
 
     result_df = enrich_listings_with_phone(
         listings_df,
