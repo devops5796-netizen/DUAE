@@ -225,7 +225,7 @@ def enrich_listings_with_phone(
             for attempt_num in range(2):
                 try:
                     page.goto(url, wait_until="domcontentloaded", timeout=45000)
-                    page.wait_for_timeout(random.uniform(6000, 1000))
+                    page.wait_for_timeout(random.uniform(6000, 10000))
 
                     html = _safe_content(page)
                     if _is_challenge_page(html):
