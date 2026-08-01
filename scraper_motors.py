@@ -314,7 +314,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=15)
-    parser.add_argument("--input", type=str, default="used_cars.csv")
+    parser.add_argument("--input", type=str, default="used_cars.xlsx")
     args = parser.parse_args()
 
     listings_df = pd.read_csv(args.input)[args.start:args.end]
