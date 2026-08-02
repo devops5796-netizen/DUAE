@@ -5,12 +5,17 @@ import time
 import pandas as pd
 from camoufox.sync_api import Camoufox
 
-BASE_URL = "https://uae.dubizzle.com/property-agencies/{slug}/"
+BASE_URLS = {
+    "agency": "https://uae.dubizzle.com/property-agencies/{slug}/",
+    "agent": "https://uae.dubizzle.com/property-agents/{slug}/",
+}
 
 BUTTON_SELECTORS = [
     '[data-testid="profile-call-button"]',
     'button:has-text("Call")',
     '[data-testid="call-cta-button"]',
+    'button:has-text("Show Phone Number")',
+    'button:has-text("Show Number")',
     '[data-testid*="phone" i]',
     '[data-testid*="call" i]',
 ]
@@ -28,8 +33,6 @@ def _is_challenge_page(html: str) -> bool:
     return any(marker in html for marker in CHALLENGE_MARKERS)
 
 
-
-
 def _safe_content(page, retries=3, delay=1500):
     for attempt in range(retries):
         try:
@@ -41,7 +44,34 @@ def _safe_content(page, retries=3, delay=1500):
     return ""
 
 
-def _reveal_agency_phone(page, timeout_ms=10000):
+PHONE_KEY_HINTS = ["phone", "didnumber"]
+
+
+def _find_phone_recursive(obj):
+    """
+    Generic recursive search for any key whose name looks phone-related
+    (contains 'phone', or is 'didNumber' -- the agent profile endpoint
+    returns the real number under didNumber and leaves phoneNumber null)
+    and whose value is a non-empty string/int.
+    """
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            key_lower = key.lower()
+            if any(hint in key_lower for hint in PHONE_KEY_HINTS) and isinstance(value, (str, int)) and value:
+                return str(value)
+        for value in obj.values():
+            found = _find_phone_recursive(value)
+            if found:
+                return found
+    elif isinstance(obj, list):
+        for item in obj:
+            found = _find_phone_recursive(item)
+            if found:
+                return found
+    return None
+
+
+def _reveal_phone(page, timeout_ms=10000, debug=False):
     captured = {"data": None}
 
     def handle_response(response):
@@ -51,7 +81,7 @@ def _reveal_agency_phone(page, timeout_ms=10000):
             post_data = response.request.post_data or ""
         except Exception:
             post_data = ""
-        if "contactPhoneNumber" in post_data and response.status == 200:
+        if "phone" in post_data.lower() and response.status == 200:
             try:
                 captured["data"] = response.json()
             except Exception:
@@ -94,27 +124,36 @@ def _reveal_agency_phone(page, timeout_ms=10000):
     if captured["data"] is None:
         return None, "no_response_captured"
 
-    phone = (
-        captured["data"]
-        .get("data", {})
-        .get("agency", {})
-        .get("contactPhoneNumber")
-    )
+    phone = _find_phone_recursive(captured["data"])
+
+    if phone is None:
+        if debug:
+            # Dump the raw response once so you can see the real key path
+            # and hardcode it back in if you want, instead of the generic
+            # recursive search.
+            import json
+            print("    [DEBUG] captured data but no 'phone' key found. Raw response:")
+            print(json.dumps(captured["data"], ensure_ascii=False, indent=2)[:2000])
+        return None, "phone_field_not_found"
+
     return phone, "ok"
 
 
-def enrich_agencies_with_phone(
+def enrich_profiles_with_phone(
     df: pd.DataFrame,
     slug_column: str = "slug",
-    headless: bool = False,
+    profile_type: str = "agency",  # "agency" or "agent"
+    headless: bool = True,
     min_delay: float = 10,
     max_delay: float = 20,
     save_every: int = 25,
-    checkpoint_path: str = "agencies_with_phone_checkpoint.xlsx",
+    checkpoint_path: str = "profiles_with_phone_checkpoint.xlsx",
     resume: bool = True,
     max_new: int = None,
+    debug: bool = False,
 ) -> pd.DataFrame:
     df = df.copy()
+    base_url = BASE_URLS[profile_type]
 
     already_done = {}  # slug -> (phone, status)
     if resume and os.path.exists(checkpoint_path):
@@ -123,9 +162,9 @@ def enrich_agencies_with_phone(
             for _, prow in prev_df.iterrows():
                 slug = prow.get(slug_column)
                 status = prow.get("_scrape_status")
-                if slug and pd.notna(status) and status not in ("imperva_challenge", "button_not_found"):
+                if slug and pd.notna(status) and status not in ("imperva_challenge", "button_not_found", "phone_field_not_found"):
                     already_done[slug] = (prow.get("contact_phone_number"), status)
-            print(f"Resuming: found {len(already_done)} already-processed agencies in checkpoint.")
+            print(f"Resuming: found {len(already_done)} already-processed {profile_type} profiles in checkpoint.")
         except Exception as e:
             print(f"Could not read checkpoint for resume ({e}), starting fresh.")
 
@@ -147,9 +186,8 @@ def enrich_agencies_with_phone(
     consecutive_soft_fails = 0
     SOFT_FAIL_THRESHOLD = 3
 
-    # Initializing Camoufox instead of standard Playwright + Stealth
     with Camoufox(
-        headless=True,
+        headless=headless,
         humanize=True,
         geoip=True,
         block_images=False
@@ -171,8 +209,8 @@ def enrich_agencies_with_phone(
                 print(f"[{pos + 1}/{len(df)}] Skipped - no slug")
                 continue
 
-            url = BASE_URL.format(slug=slug)
-            print(f"[{pos + 1}/{len(df)}] {slug}")
+            url = base_url.format(slug=slug)
+            print(f"[{pos + 1}/{len(df)}] {url}")
 
             attempt_result = None
             for attempt_num in range(2):
@@ -181,17 +219,10 @@ def enrich_agencies_with_phone(
                     page.wait_for_timeout(random.uniform(10000, 15000))
 
                     html = _safe_content(page)
-                    """if _is_challenge_page(html):
-                        print("  -> Challenge page detected (Imperva/hCaptcha), stopping batch.")
-                        statuses[pos] = "imperva_challenge"
-                        save_checkpoint()
-                        attempt_result = "imperva_break"
-                        break"""
                     if _is_challenge_page(html):
                         print("Challenge detected")
 
                         page.screenshot(path="imperva.png", full_page=True)
-
                         with open("imperva.html", "w", encoding="utf-8") as f:
                             f.write(html)
 
@@ -205,17 +236,17 @@ def enrich_agencies_with_phone(
                         attempt_result = "imperva_break"
                         break
 
-                    phone, status = _reveal_agency_phone(page)
+                    phone, status = _reveal_phone(page, debug=debug)
                     phones[pos] = phone
                     statuses[pos] = status
                     print(f"  -> phone: {phone} (status: {status})")
 
-                    if status == "button_not_found":
+                    if status in ("button_not_found", "phone_field_not_found"):
                         consecutive_soft_fails += 1
                         try:
                             safe_slug = slug.replace("/", "_")
                             page.screenshot(
-                                path=f"debug_no_button_{safe_slug}.png", full_page=True
+                                path=f"debug_no_phone_{safe_slug}.png", full_page=True
                             )
                             page_text = page.locator("body").inner_text()[:500]
                             print(f"     [DEBUG] Page title: {page.title()}")
@@ -242,7 +273,7 @@ def enrich_agencies_with_phone(
 
             if consecutive_soft_fails >= SOFT_FAIL_THRESHOLD:
                 print(
-                    f"\n⚠️  {consecutive_soft_fails} consecutive 'button_not_found' results - "
+                    f"\n\u26a0\ufe0f  {consecutive_soft_fails} consecutive soft-fail results - "
                     "this looks like a soft rate-limit/reputation warning from Imperva, "
                     "not real missing buttons. Stopping this run early to avoid a full block."
                 )
@@ -260,8 +291,8 @@ def enrich_agencies_with_phone(
 
         page.close()
 
-    save_checkpoint() 
-    print(f"\nThis run processed {new_processed_count} new agencies.")
+    save_checkpoint()
+    print(f"\nThis run processed {new_processed_count} new {profile_type} profiles.")
 
     df["contact_phone_number"] = phones
     df["_scrape_status"] = statuses
@@ -270,31 +301,40 @@ def enrich_agencies_with_phone(
 
 if __name__ == "__main__":
     import argparse
+    from pathlib import Path
+
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        "--start",
-        type=int,
-        default=0
-    )
-
-    parser.add_argument(
-        "--end",
-        type=int,
-        default=15
-    )
+    parser.add_argument("--start", type=int, default=0)
+    parser.add_argument("--end", type=int, default=2)
+    parser.add_argument("--input", type=str, default="all_property_agents_0_100.csv")
+    parser.add_argument("--profile-type", type=str, default="agent", choices=["agency", "agent"])
+    parser.add_argument("--debug", action="store_true", help="Dump raw response JSON when no phone key is found")
 
     args = parser.parse_args()
-    start = 60
-    end = 75
-    agencies_df = pd.read_csv("property_agencies.csv")[args.start:args.end]
 
-    result_df = enrich_agencies_with_phone(agencies_df, max_new=100, checkpoint_path="agencies_checkpoint.xlsx")
+    ext = Path(args.input).suffix.lower()
 
-    result_df.to_csv(f"agencies_with_phone_{args.start}_{args.end}.csv", index=False, encoding="utf-8-sig")
+    if ext == ".xlsx":
+        profiles_df = pd.read_excel(args.input)
+    else:
+        profiles_df = pd.read_csv(args.input)
+
+    result_df = enrich_profiles_with_phone(
+        profiles_df,
+        profile_type=args.profile_type,
+        max_new=100,
+        checkpoint_path=f"{args.profile_type}_checkpoint.xlsx",
+        debug=args.debug,
+    )
+
+    result_df.to_csv(
+        f"{args.profile_type}_with_phone_{args.start}_{args.end}.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
 
     total = len(result_df)
     with_phone = result_df["contact_phone_number"].notna().sum()
     attempted = result_df["_scrape_status"].notna().sum()
     print(f"\nProgress so far: {attempted}/{total} attempted, {with_phone} have a phone number")
-
