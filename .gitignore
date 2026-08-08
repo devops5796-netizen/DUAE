@@ -10,3 +10,7 @@ categories_pages.csv
 
 README.md
 try.py
+
+main_nw_proj.py
+new_projects_writer.py
+.github\workflows\Property_New_Projects.yml
