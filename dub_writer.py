@@ -666,7 +666,7 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
 
 
 def process_category(category_name: str, jsonl_files: list, output_base_dir: str,
-                      upload_images: bool = True, image_workers: int = 2,
+                      upload_images: bool = False, image_workers: int = 2,
                       enrich_contact_details: bool = False) -> dict:
     df = load_all_hits(jsonl_files)
 

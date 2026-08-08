@@ -571,7 +571,7 @@ def process_category(
     category_name: str,
     jsonl_files: list,
     output_base_dir: str,
-    upload_images: bool = True,
+    upload_images: bool = False,
     image_workers: int = 4,
     enrich_contact_details: bool = False,
 ) -> dict:

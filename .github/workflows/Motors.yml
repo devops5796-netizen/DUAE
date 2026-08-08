@@ -258,7 +258,7 @@ jobs:
           # Process data (NO phone_lookup)
           result = process_category(
               category, jsonl_files, output_base,
-              upload_images=True, enrich_contact_details=True
+              upload_images=False, enrich_contact_details=True
           )
 
           print(f"\nCategory: {category} | Total rows: {result['total']} | Excel files: {len(result['excel_files'])}")
