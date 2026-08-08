@@ -12,6 +12,9 @@ from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from r2_uploader import upload_buffer
 
+from playwright.sync_api import sync_playwright
+from playwright_stealth import Stealth
+
 # used_cars / new_cars / export_cars / rental_cars keep the explicit
 # brand -> model split below (is_car_split). Every other Motors category
 # (motorcycles, auto_accessories_parts, heavy_vehicles, boats,
