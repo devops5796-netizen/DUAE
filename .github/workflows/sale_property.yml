@@ -81,7 +81,7 @@ jobs:
                   r = requests.post(URL, params=PARAMS, json=payload, timeout=30)
                   data = r.json()
                   nb_pages = data["results"][0]["nbPages"]
-                  nb_pages = 5
+                  nb_pages = 20 
                   print(f"  {category_name}: {nb_pages} pages")
               except Exception as e:
                   print(f"  Failed: {e}")
@@ -166,8 +166,7 @@ jobs:
               "sale_multiple_units": { "index": "property-for-sale-multiple-units.com", "filter": '("categories_v2.slug_paths":"property-for-sale/multiple-units")', "hits": [] },
               "sale_commercial": {"index": "property-for-sale-commercial.com", "filter": '("category_v2.slug_paths":"property-for-sale/commercial")'},
               "sale_land": { "index": "property-for-sale-land.com", "filter": '("categories_v2.slug_paths":"property-for-sale/land")', "hits": [] },
-          
-            }
+          }
 
           ROWS_PER_BATCH = 2000
           HITS_PER_PAGE = 35
@@ -193,7 +192,7 @@ jobs:
 
               if nb_pages == 0:
                   continue
-              nb_pages = 5
+              nb_pages = 20
               n_batches = math.ceil(nb_pages / PAGES_PER_BATCH)
               print(f"{category_name}: {nb_pages} pages -> {n_batches} batches")
 
@@ -563,7 +562,7 @@ jobs:
               "failed_pages": all_failed_pages,
           }
 
-          # UPLOAD summary.json / failed.json / request_metrics.json
+          # UPLOAD summary.json (contains request_metrics + failed_items inside)
           summary_hierarchy_groups = set()
           for relative_path in excel_groups.keys():
               parts = relative_path.replace(os.sep, '/').split('/')
@@ -611,17 +610,6 @@ jobs:
               client.put_object(Bucket=bucket, Key=r2_key, Body=json.dumps(summary_data, ensure_ascii=False, indent=2).encode('utf-8'),
                                ContentType='application/json; charset=utf-8')
               print(f"Uploaded summary: {r2_key}")
-
-          for hierarchy in summary_hierarchy_groups:
-              failed_key = f"DUAE/{date_prefix}/{hierarchy}/summary/failed.json"
-              client.put_object(Bucket=bucket, Key=failed_key, Body=json.dumps(failed_data, ensure_ascii=False, indent=2).encode('utf-8'),
-                               ContentType='application/json; charset=utf-8')
-              print(f"Uploaded: {failed_key}")
-
-              metrics_key = f"DUAE/{date_prefix}/{hierarchy}/summary/request_metrics.json"
-              client.put_object(Bucket=bucket, Key=metrics_key, Body=json.dumps(request_metrics, ensure_ascii=False, indent=2).encode('utf-8'),
-                               ContentType='application/json; charset=utf-8')
-              print(f"Uploaded: {metrics_key}")
 
           print(f"\nDONE: {uploaded_count} files uploaded for {category} | Total rows: {total_rows_all}")
           EOF
