@@ -162,27 +162,12 @@ jobs:
           merge-multiple: true
           path: raw_parts/
 
-      - name: Get workflow duration
-        id: workflow_duration
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          STARTED_AT=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }} --jq .run_started_at)
-          START_TIMESTAMP=$(date -d "$STARTED_AT" +%s)
-          NOW_TIMESTAMP=$(date -u +%s)
-          DURATION_SEC=$((NOW_TIMESTAMP - START_TIMESTAMP))
-          echo "start_time=$START_TIMESTAMP" >> "$GITHUB_OUTPUT"
-          echo "duration_sec=$DURATION_SEC" >> "$GITHUB_OUTPUT"
-          echo "Workflow started at: $STARTED_AT"
-          echo "Workflow duration: ${DURATION_SEC}s"
-
       - name: Process and upload to R2
         env:
           CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
           CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
           CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
           CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
-          WORKFLOW_DURATION: ${{ steps.workflow_duration.outputs.duration_sec }}
         run: |
           python << 'EOF'
           import glob
@@ -296,34 +281,132 @@ jobs:
                   ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
               print(f"Uploaded JSON: {r2_key}")
 
-          # Upload summary files
+          # Save summary placeholder for finalization later
+          summary_paths = []
           for root, dirs, files in os.walk('output'):
               for file in files:
                   if file == 'summary.json':
-                      local_path = os.path.join(root, file)
-                      relative_path = os.path.relpath(local_path, output_base)
-                      parts = relative_path.split(os.sep)
-                      if len(parts) >= 3:
-                          cat0 = parts[0]
-                          cat1 = parts[1]
-                          r2_key = f"DUAE/{date_prefix}/{cat0}/{cat1}/summary/summary.json"
+                      summary_paths.append(os.path.join(root, file))
 
-                          # Add workflow_duration_sec to summary
-                          workflow_duration = os.getenv("WORKFLOW_DURATION")
-                          if workflow_duration:
-                              try:
-                                  with open(local_path, 'r', encoding='utf-8') as f:
-                                      summary_data = json.load(f)
-                                  if "request_metrics" in summary_data:
-                                      summary_data["request_metrics"]["workflow_duration_sec"] = float(workflow_duration)
-                                  with open(local_path, 'w', encoding='utf-8') as f:
-                                      json.dump(summary_data, f, ensure_ascii=False, indent=2)
-                              except Exception as e:
-                                  print(f"  Could not add workflow_duration: {e}")
-
-                          client.upload_file(local_path, bucket, r2_key,
-                              ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
-                          print(f"Uploaded summary: {r2_key}")
+          # Copy summaries to a known location for artifact upload
+          os.makedirs("summaries", exist_ok=True)
+          for sp in summary_paths:
+              rel = os.path.relpath(sp, output_base)
+              parts = rel.split(os.sep)
+              if len(parts) >= 3:
+                  cat0, cat1 = parts[0], parts[1]
+                  dest = f"summaries/summary_placeholder_{cat0}_{cat1}.json"
+              else:
+                  dest = f"summaries/summary_placeholder_{category}.json"
+              shutil.copy(sp, dest)
+              print(f"  Saved summary placeholder: {dest}")
 
           print(f"\nDONE: {len(result['excel_files'])} excel + {len(result['json_files'])} json files uploaded for {category}")
+          EOF
+
+      - name: Upload summary placeholder
+        uses: actions/upload-artifact@v4
+        with:
+          name: summary-${{ matrix.category }}
+          path: summaries/*.json
+          if-no-files-found: ignore
+
+  finalize-summaries:
+    runs-on: ubuntu-latest
+    needs: merge
+    if: ${{ always() }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install boto3
+
+      - name: Get workflow duration
+        id: workflow_duration
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STARTED_AT=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }} --jq .run_started_at)
+          START_TIMESTAMP=$(date -d "$STARTED_AT" +%s)
+          NOW_TIMESTAMP=$(date -u +%s)
+          DURATION_SEC=$((NOW_TIMESTAMP - START_TIMESTAMP))
+          echo "duration_sec=$DURATION_SEC" >> "$GITHUB_OUTPUT"
+          echo "Workflow started at: $STARTED_AT"
+          echo "Workflow duration: ${DURATION_SEC}s"
+
+      - name: Download all summary placeholders
+        uses: actions/download-artifact@v4
+        with:
+          pattern: summary-*
+          merge-multiple: true
+          path: summaries/
+
+      - name: Finalize and upload summaries to R2
+        env:
+          CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
+          CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
+          WORKFLOW_DURATION: ${{ steps.workflow_duration.outputs.duration_sec }}
+        run: |
+          python << 'EOF'
+          import glob
+          import json
+          import os
+          import boto3
+          from datetime import datetime
+
+          dt = datetime.now()
+          date_prefix = f"year={dt.year}/month={dt.strftime('%m')}/day={dt.strftime('%d')}"
+
+          client = boto3.client('s3',
+              endpoint_url=os.environ['CF_R2_ENDPOINT_URL'],
+              aws_access_key_id=os.environ['CF_R2_ACCESS_KEY_ID'],
+              aws_secret_access_key=os.environ['CF_R2_SECRET_ACCESS_KEY'],
+              region_name='auto'
+          )
+          bucket = os.environ['CF_R2_BUCKET_NAME']
+          workflow_duration = os.getenv("WORKFLOW_DURATION")
+
+          summary_files = glob.glob("summaries/*.json")
+          print(f"Found {len(summary_files)} summary placeholder(s)")
+
+          for filepath in summary_files:
+              basename = os.path.basename(filepath)
+              # summary_placeholder_{cat0}_{cat1}.json
+              parts = basename.replace("summary_placeholder_", "").replace(".json", "").split("_")
+              if len(parts) >= 2:
+                  cat0 = parts[0]
+                  cat1 = parts[1]
+                  r2_key = f"DUAE/{date_prefix}/{cat0}/{cat1}/summary/summary.json"
+              else:
+                  r2_key = f"DUAE/{date_prefix}/{basename.replace('summary_placeholder_', '').replace('.json', '')}/summary/summary.json"
+
+              with open(filepath, 'r', encoding='utf-8') as f:
+                  summary = json.load(f)
+
+              if workflow_duration:
+                  try:
+                      if "request_metrics" not in summary:
+                          summary["request_metrics"] = {}
+                      summary["request_metrics"]["workflow_duration_sec"] = float(workflow_duration)
+                      print(f"  Added workflow_duration_sec={workflow_duration}s")
+                  except ValueError:
+                      pass
+
+              client.put_object(
+                  Bucket=bucket,
+                  Key=r2_key,
+                  Body=json.dumps(summary, ensure_ascii=False, indent=2).encode('utf-8'),
+                  ContentType='application/json; charset=utf-8'
+              )
+              print(f"  Uploaded: {r2_key}")
+
+          print("\nAll summaries finalized and uploaded!")
           EOF
