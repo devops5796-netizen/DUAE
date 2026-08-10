@@ -81,7 +81,7 @@ jobs:
                   r = requests.post(URL, params=PARAMS, json=payload, timeout=30)
                   data = r.json()
                   nb_pages = data["results"][0]["nbPages"]
-                  nb_pages = 50
+                  nb_pages = 20
                   print(f"  {category_name}: {nb_pages} pages")
               except Exception as e:
                   print(f"  Failed: {e}")
@@ -168,7 +168,7 @@ jobs:
               "sale_land": { "index": "property-for-sale-land.com", "filter": '("categories_v2.slug_paths":"property-for-sale/land")', "hits": [] },
           }
 
-          ROWS_PER_BATCH = 2000
+          ROWS_PER_BATCH = 1000
           HITS_PER_PAGE = 35
           PAGES_PER_BATCH = math.ceil(ROWS_PER_BATCH / HITS_PER_PAGE)
 
@@ -192,7 +192,7 @@ jobs:
 
               if nb_pages == 0:
                   continue
-              nb_pages = 50
+              nb_pages = 20
               n_batches = math.ceil(nb_pages / PAGES_PER_BATCH)
               print(f"{category_name}: {nb_pages} pages -> {n_batches} batches")
 
