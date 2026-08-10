@@ -40,6 +40,33 @@ COLUMNS_TO_DROP = [
 ]
 
 
+def get_category_path(category_v2_value) -> str:
+    """Build R2 folder path from category_v2.slug_paths dynamically.
+
+    Example:
+        slug_paths: ['motors', 'motors/used-cars', 'motors/used-cars/alfa-romeo', 'motors/used-cars/alfa-romeo/giulia']
+        -> deepest: 'motors/used-cars/alfa-romeo/giulia'
+        -> parent:  'motors/used-cars'  (keep first 2 segments after 'motors')
+        -> result:  'motors/used-cars'
+
+    For motors, we take the first 2 meaningful segments (motors + sub-category).
+    """
+    cat = parse_dict_field(category_v2_value)
+    slug_paths = cat.get("slug_paths", [])
+    if not slug_paths:
+        return "unknown"
+
+    # Take the deepest path (first element)
+    deepest = slug_paths[0]
+    parts = deepest.split("/")
+
+    # For motors: keep first 2 segments (e.g. motors/used-cars)
+    # If only 1 segment, use it as-is
+    if len(parts) >= 2:
+        return "/".join(parts[:2])
+    return deepest
+
+
 def parse_dict_field(value):
     if isinstance(value, dict):
         return value
@@ -417,6 +444,7 @@ def build_group_summary(
     cat1: str,
     dt: datetime,
     output_base_dir: str,
+    category_path: str = None,
 ) -> dict:
     """
     DKSA-style summary with request_metrics + failed_items.
@@ -465,8 +493,9 @@ def build_group_summary(
 
     return {
         "scraped_at": dt.isoformat(),
-        "data_scraped_date": dt.strftime("%Y-%m-%d"),
+        "data_scraped_date": (dt - timedelta(days=1)).strftime("%Y-%m-%d"),
         "saved_to_R2_date": dt.strftime("%Y-%m-%d"),
+        "category_path": category_path,
         "category": {
             "name_ar": f"{cat0}/{cat1}",
             "name_en": f"{cat0}/{cat1}",
@@ -659,7 +688,8 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
                 json_files.append(json_path)
 
         dt = datetime.now(timezone.utc)
-        summary = build_group_summary(sheets, group_df, safe_cat0, safe_cat1, dt, output_base_dir)
+        category_path = get_category_path(group_df["category_v2"].iloc[0]) if not group_df.empty and "category_v2" in group_df.columns else f"{safe_cat0}/{safe_cat1}"
+        summary = build_group_summary(sheets, group_df, safe_cat0, safe_cat1, dt, output_base_dir, category_path)
         summary_file_path = os.path.join(summary_dir, "summary.json")
         with open(summary_file_path, "w", encoding="utf-8") as f:
             json.dump(summary, f, ensure_ascii=False, indent=2)
@@ -670,7 +700,7 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
 
 def process_category(category_name: str, jsonl_files: list, output_base_dir: str,
                       upload_images: bool = False, image_workers: int = 2,
-                      enrich_contact_details: bool = False) -> dict:
+                      enrich_description: bool = True) -> dict:
     df = load_all_hits(jsonl_files)
 
     if df.empty:
@@ -678,7 +708,7 @@ def process_category(category_name: str, jsonl_files: list, output_base_dir: str
 
     df = convert_timestamp_columns(df)
 
-    if enrich_contact_details and "absolute_url" in df.columns:
+    if enrich_description and "absolute_url" in df.columns:
         print(f"  Enriching {len(df)} rows with description_full...")
         df = enrich_with_description(df)
 

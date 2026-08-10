@@ -228,7 +228,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: pip install pandas openpyxl boto3 requests pillow python-dotenv playwright playwright-stealth
 
@@ -594,7 +594,10 @@ jobs:
               "failed_pages": all_failed_pages,
           }
 
-          # UPLOAD summary.json - aggregate from batch summaries
+          # SAVE summary placeholders for finalization (duration added later by finalize_summaries.py)
+          os.makedirs("summaries", exist_ok=True)
+          
+          # Aggregate batch summaries
           summary_by_group = {}
           for batch_dir in batch_dirs:
               for summary_file in glob.glob(os.path.join(batch_dir, "**", "summary.json"), recursive=True):
@@ -603,14 +606,18 @@ jobs:
                           s = json.load(f)
                   except Exception:
                       continue
-
-                  agg = summary_by_group.setdefault(category_path, {
+                  
+                  cp = s.get("category_path", category_path)
+                  agg = summary_by_group.setdefault(cp, {
                       "scraped_at": s.get("scraped_at"),
                       "data_scraped_date": s.get("data_scraped_date"),
                       "saved_to_R2_date": s.get("saved_to_R2_date"),
                       "category": s.get("category", {}),
+                      "category_path": cp,
+                      "workflow_name": "Sale Property",
                       "total_listings": 0,
                       "subcats": {},
+                      "failed_items": [],
                   })
                   agg["total_listings"] += s.get("total_listings", 0)
                   for sc in s.get("subcategories", []):
@@ -619,7 +626,9 @@ jobs:
                           agg["subcats"][key]["listings_count"] += sc["listings_count"]
                       else:
                           agg["subcats"][key] = dict(sc)
-
+                  agg["failed_items"].extend(s.get("failed_items", []))
+          
+          # Save aggregated summaries for finalization
           for cp, agg in summary_by_group.items():
               summary_data = {
                   "scraped_at": agg["scraped_at"],
@@ -632,13 +641,76 @@ jobs:
                   "total_listings": agg["total_listings"],
                   "subcategories": list(agg["subcats"].values()),
                   "request_metrics": request_metrics,
-                  "failed_items": failed_items,
+                  "failed_items": agg["failed_items"],
                   "failed_items_summary": failed_items_summary,
               }
-              r2_key = f"DUAE/{date_prefix}/{cp}/summary/summary.json"
-              client.put_object(Bucket=bucket, Key=r2_key, Body=json.dumps(summary_data, ensure_ascii=False, indent=2).encode('utf-8'),
-                               ContentType='application/json; charset=utf-8')
-              print(f"Uploaded summary: {r2_key}")
+              
+              safe_cp = cp.replace("/", "_")
+              summary_path = f"summaries/summary_placeholder_{safe_cp}.json"
+              with open(summary_path, "w", encoding="utf-8") as f:
+                  json.dump(summary_data, f, ensure_ascii=False, indent=2)
+              print(f"Saved summary placeholder: {summary_path}")
+          
+          # Copy request stats for finalization
+          for stats_file in glob.glob("batches/**/request_stats_*.json", recursive=True):
+              shutil.copy(stats_file, "summaries/")
+              print(f"Copied request stats: {os.path.basename(stats_file)}")
+          
+          print(f"\nDONE: {uploaded_count} files uploaded for {category} | Total rows: {total_rows_all}")
 
           print(f"\nDONE: {uploaded_count} files uploaded for {category} | Total rows: {total_rows_all}")
           EOF
+
+      - name: Upload summary placeholders for finalization
+        uses: actions/upload-artifact@v4
+        with:
+          name: summaries-${{ matrix.category }}
+          path: summaries/
+          if-no-files-found: ignore
+
+
+  finalize-summaries:
+    runs-on: ubuntu-latest
+    needs: final_merge
+    if: ${{ always() }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install boto3 python-dotenv
+
+      - name: Get workflow duration
+        id: workflow_duration
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STARTED_AT=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }} --jq .run_started_at)
+          START_TIMESTAMP=$(date -d "$STARTED_AT" +%s)
+          NOW_TIMESTAMP=$(date -u +%s)
+          DURATION_SEC=$((NOW_TIMESTAMP - START_TIMESTAMP))
+          echo "duration_sec=$DURATION_SEC" >> "$GITHUB_OUTPUT"
+          echo "Workflow started at: $STARTED_AT"
+          echo "Workflow duration: ${DURATION_SEC}s"
+
+      - name: Download all summary placeholders
+        uses: actions/download-artifact@v4
+        with:
+          pattern: summaries-*
+          merge-multiple: true
+          path: summaries/
+
+      - name: Finalize and upload summaries to R2
+        env:
+          CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+          CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+          CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
+          CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
+          WORKFLOW_DURATION: ${{ steps.workflow_duration.outputs.duration_sec }}
+        run: |
+          python finalize_summaries.py --summaries-dir summaries/ --workflow "Sale Property" --aggregate

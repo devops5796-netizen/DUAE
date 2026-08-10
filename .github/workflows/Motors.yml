@@ -243,23 +243,41 @@ jobs:
           # Process data (NO phone_lookup)
           result = process_category(
               category, jsonl_files, output_base,
-              upload_images=False, enrich_contact_details=True
+              upload_images=False, enrich_description=True
           )
 
           print(f"\nCategory: {category} | Total rows: {result['total']} | Excel files: {len(result['excel_files'])}")
           print(f"Total Pages: {total_pages} | Failed Pages: {len(failed_pages)} | Failed: {failed_percentage:.2f}%")
 
+          # Read category_path from first summary.json found
+          category_path = None
+          for root, dirs, files in os.walk(output_base):
+              for file in files:
+                  if file == 'summary.json':
+                      try:
+                          with open(os.path.join(root, file), 'r', encoding='utf-8') as f:
+                              s = json.load(f)
+                          category_path = s.get("category_path")
+                          if category_path:
+                              break
+                      except Exception:
+                          pass
+              if category_path:
+                  break
+
+          if not category_path:
+              category_path = category.replace("_", "/")
+              print(f"Warning: category_path not found in summaries, using fallback: {category_path}")
+
+          print(f"Using category_path: {category_path}")
+
           # Upload Excel files
           for local_path in result["excel_files"]:
               relative_path = os.path.relpath(local_path, output_base)
               parts = relative_path.split(os.sep)
-              if len(parts) >= 3:
-                  cat0 = parts[0]
-                  cat1 = parts[1]
-                  remaining_path = '/'.join(parts[3:]) if len(parts) > 3 else parts[2]
-                  r2_key = f"DUAE/{date_prefix}/{cat0}/{cat1}/excel/{remaining_path}"
-              else:
-                  r2_key = f"DUAE/{date_prefix}/{relative_path}"
+              # parts = [cat0, cat1, excel, filename.xlsx]
+              filename = parts[-1]
+              r2_key = f"DUAE/{date_prefix}/{category_path}/excel/{filename}"
 
               client.upload_file(local_path, bucket, r2_key,
                   ExtraArgs={'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
@@ -269,13 +287,8 @@ jobs:
           for local_path in result["json_files"]:
               relative_path = os.path.relpath(local_path, output_base)
               parts = relative_path.split(os.sep)
-              if len(parts) >= 3:
-                  cat0 = parts[0]
-                  cat1 = parts[1]
-                  remaining_path = '/'.join(parts[3:]) if len(parts) > 3 else parts[2]
-                  r2_key = f"DUAE/{date_prefix}/{cat0}/{cat1}/json/{remaining_path}"
-              else:
-                  r2_key = f"DUAE/{date_prefix}/{relative_path}"
+              filename = parts[-1]
+              r2_key = f"DUAE/{date_prefix}/{category_path}/json/{filename}"
 
               client.upload_file(local_path, bucket, r2_key,
                   ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
@@ -291,12 +304,14 @@ jobs:
           # Copy summaries to a known location for artifact upload
           os.makedirs("summaries", exist_ok=True)
           for sp in summary_paths:
-              rel = os.path.relpath(sp, output_base)
-              parts = rel.split(os.sep)
-              if len(parts) >= 3:
-                  cat0, cat1 = parts[0], parts[1]
-                  dest = f"summaries/summary_placeholder_{cat0}_{cat1}.json"
-              else:
+              try:
+                  with open(sp, 'r', encoding='utf-8') as f:
+                      s = json.load(f)
+                  cp = s.get("category_path", category)
+                  # Sanitize for filename
+                  safe_cp = cp.replace("/", "_")
+                  dest = f"summaries/summary_placeholder_{safe_cp}.json"
+              except Exception:
                   dest = f"summaries/summary_placeholder_{category}.json"
               shutil.copy(sp, dest)
               print(f"  Saved summary placeholder: {dest}")
@@ -355,58 +370,4 @@ jobs:
           CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
           WORKFLOW_DURATION: ${{ steps.workflow_duration.outputs.duration_sec }}
         run: |
-          python << 'EOF'
-          import glob
-          import json
-          import os
-          import boto3
-          from datetime import datetime
-
-          dt = datetime.now()
-          date_prefix = f"year={dt.year}/month={dt.strftime('%m')}/day={dt.strftime('%d')}"
-
-          client = boto3.client('s3',
-              endpoint_url=os.environ['CF_R2_ENDPOINT_URL'],
-              aws_access_key_id=os.environ['CF_R2_ACCESS_KEY_ID'],
-              aws_secret_access_key=os.environ['CF_R2_SECRET_ACCESS_KEY'],
-              region_name='auto'
-          )
-          bucket = os.environ['CF_R2_BUCKET_NAME']
-          workflow_duration = os.getenv("WORKFLOW_DURATION")
-
-          summary_files = glob.glob("summaries/*.json")
-          print(f"Found {len(summary_files)} summary placeholder(s)")
-
-          for filepath in summary_files:
-              basename = os.path.basename(filepath)
-              # summary_placeholder_{cat0}_{cat1}.json
-              parts = basename.replace("summary_placeholder_", "").replace(".json", "").split("_")
-              if len(parts) >= 2:
-                  cat0 = parts[0]
-                  cat1 = parts[1]
-                  r2_key = f"DUAE/{date_prefix}/{cat0}/{cat1}/summary/summary.json"
-              else:
-                  r2_key = f"DUAE/{date_prefix}/{basename.replace('summary_placeholder_', '').replace('.json', '')}/summary/summary.json"
-
-              with open(filepath, 'r', encoding='utf-8') as f:
-                  summary = json.load(f)
-
-              if workflow_duration:
-                  try:
-                      if "request_metrics" not in summary:
-                          summary["request_metrics"] = {}
-                      summary["request_metrics"]["workflow_duration_sec"] = float(workflow_duration)
-                      print(f"  Added workflow_duration_sec={workflow_duration}s")
-                  except ValueError:
-                      pass
-
-              client.put_object(
-                  Bucket=bucket,
-                  Key=r2_key,
-                  Body=json.dumps(summary, ensure_ascii=False, indent=2).encode('utf-8'),
-                  ContentType='application/json; charset=utf-8'
-              )
-              print(f"  Uploaded: {r2_key}")
-
-          print("\nAll summaries finalized and uploaded!")
-          EOF
+          python finalize_summaries.py --summaries-dir summaries/ --workflow "Motors"
