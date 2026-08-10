@@ -5,7 +5,6 @@ import requests
 import random
 from datetime import datetime, timezone, timedelta
 from request_tracker import tracker
-#import pandas as pd
 
 URL = "https://wd0ptz13zs-dsn.algolia.net/1/indexes/*/queries"
 
@@ -40,6 +39,7 @@ CATEGORIES = {
 
 TARGET_DATE = datetime.now(timezone.utc).date() - timedelta(days=1)
 
+
 def filter_yesterday_hits(hits):
     filtered = []
 
@@ -69,7 +69,7 @@ def get_page_with_retry(category: dict, page: int, max_retries: int = 3) -> dict
         "requests": [{
             "indexName": category["index"],
             "query": "",
-            "params": f"page={page}&hitsPerPage=25&filters={category['filter']}",
+            "params": f"page={page}&hitsPerPage=35&filters={category['filter']}",
         }]
     }
 
@@ -113,15 +113,6 @@ def run(category_name: str, start_page: int, end_page: int, output_jsonl: str) -
             continue
 
         try:
-            # page_hits = data["results"][0]["hits"]
-            # print(f"  Page {page}: {len(page_hits)} listings")
-
-            # if not page_hits:
-            #     print(f"  Page {page} has no results, stopping...")
-            #     break
-
-            # hits.extend(page_hits)
-
             page_hits = data["results"][0]["hits"]
             if not page_hits:
                 print(f"  Page {page} has no results, stopping...")
@@ -144,9 +135,6 @@ def run(category_name: str, start_page: int, end_page: int, output_jsonl: str) -
     with open(output_jsonl, "w", encoding="utf-8") as f:
         for hit in hits:
             f.write(json.dumps(hit, ensure_ascii=False) + "\n")
-
-    # df = pd.DataFrame(hits)
-    # df.to_csv('outputs.csv', index=False)
 
     if failed_pages:
         failed_file = output_jsonl.replace(".jsonl", "_failed.txt")

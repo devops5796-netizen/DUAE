@@ -228,13 +228,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
+      
       - name: Install dependencies
         run: pip install pandas openpyxl boto3 requests pillow python-dotenv playwright playwright-stealth
 
       - name: Install Playwright browsers
         run: playwright install --with-deps chromium
-
+      
       - name: Download raw data for ${{ matrix.category }}
         uses: actions/download-artifact@v4
         with:
@@ -276,7 +276,7 @@ jobs:
               exit(0)
 
           output_base = "output"
-          result = process_category(category, batch_jsonl, output_base, upload_images=False, enrich_contact_details=True)
+          result = process_category(category, batch_jsonl, output_base, upload_images=False, enrich_description=True)
           print(f"Batch processed: {result['total']} rows | {len(result['excel_files'])} excel files")
 
           if not result["excel_files"]:
@@ -318,6 +318,7 @@ jobs:
           - sale_multiple_units
           - sale_commercial
           - sale_land
+          - off_plan
 
     steps:
       - name: Checkout repo
@@ -337,12 +338,27 @@ jobs:
           pattern: batch-${{ matrix.category }}-*
           path: batches/
 
+      - name: Get workflow duration
+        id: workflow_duration
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          STARTED_AT=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }} --jq .run_started_at)
+          START_TIMESTAMP=$(date -d "$STARTED_AT" +%s)
+          NOW_TIMESTAMP=$(date -u +%s)
+          DURATION_SEC=$((NOW_TIMESTAMP - START_TIMESTAMP))
+          echo "start_time=$START_TIMESTAMP" >> "$GITHUB_OUTPUT"
+          echo "duration_sec=$DURATION_SEC" >> "$GITHUB_OUTPUT"
+          echo "Workflow started at: $STARTED_AT"
+          echo "Workflow duration: ${DURATION_SEC}s"
+
       - name: Combine batches and upload to R2
         env:
           CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
           CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
           CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
           CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
+          WORKFLOW_DURATION: ${{ steps.workflow_duration.outputs.duration_sec }}
         run: |
           python << 'EOF'
           import glob
@@ -352,6 +368,23 @@ jobs:
           import pandas as pd
           from datetime import datetime
           from collections import defaultdict
+
+          def format_failed_summary(failed_items: list, max_len: int = 400) -> str | None:
+              if not failed_items:
+                  return None
+              parts = []
+              for item in failed_items[:12]:
+                  name = item.get("name", "?")
+                  count = item.get("errors", 0)
+                  detail = item.get("detail", "")
+                  bit = f"{name}: {count} error(s)"
+                  if detail:
+                      bit += f" ({detail})"
+                  parts.append(bit)
+              text = "; ".join(parts)
+              if len(failed_items) > 12:
+                  text += f"; +{len(failed_items) - 12} more"
+              return text[:max_len]
 
           category = "${{ matrix.category }}"
           dt = datetime.now()
@@ -370,6 +403,35 @@ jobs:
           if not batch_dirs:
             print(f"No batches found for {category}, skipping upload.")
             exit(0)
+
+          # Read category_path from first summary.json found
+          category_path = None
+          for batch_dir in batch_dirs:
+              for summary_file in glob.glob(os.path.join(batch_dir, "**", "summary.json"), recursive=True):
+                  try:
+                      with open(summary_file, 'r', encoding='utf-8') as f:
+                          s = json.load(f)
+                      category_path = s.get("category_path")
+                      if category_path:
+                          break
+                  except Exception:
+                      pass
+              if category_path:
+                  break
+
+          # Fallback: build from category name if no summary found
+          if not category_path:
+              if category == "off_plan":
+                  category_path = "property/property-for-sale/off-plan"
+              elif category.startswith("sale_"):
+                  category_path = f"property/property-for-sale/{category.replace('sale_', '')}"
+              elif category.startswith("rent_"):
+                  category_path = f"property/property-for-rent/{category.replace('rent_', '')}"
+              else:
+                  category_path = category.replace("_", "/")
+              print(f"Warning: category_path not found in summaries, using fallback: {category_path}")
+
+          print(f"Using category_path: {category_path}")
 
           excel_groups = defaultdict(list)
 
@@ -424,12 +486,15 @@ jobs:
               with open(local_json_path, "w", encoding="utf-8") as f:
                   json.dump(all_records, f, ensure_ascii=False, indent=2, default=str)
 
-              r2_key_excel = f"DUAE/{date_prefix}/{relative_path.replace(os.sep, '/')}"
+              # Upload to new structured path: DUAE/date/category_path/file_type/filename
+              filename = os.path.basename(local_final_path)
+              r2_key_excel = f"DUAE/{date_prefix}/{category_path}/excel/{filename}"
               client.upload_file(local_final_path, bucket, r2_key_excel,
                   ExtraArgs={'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
               print(f"Uploaded Excel: {r2_key_excel}")
 
-              r2_key_json = f"DUAE/{date_prefix}/{json_relative.replace(os.sep, '/')}"
+              json_filename = os.path.basename(local_json_path)
+              r2_key_json = f"DUAE/{date_prefix}/{category_path}/json/{json_filename}"
               client.upload_file(local_json_path, bucket, r2_key_json,
                   ExtraArgs={'ContentType': 'application/json; charset=utf-8'})
               print(f"Uploaded JSON: {r2_key_json}")
@@ -501,24 +566,6 @@ jobs:
                   "detail": fp["error"]
               })
 
-          # Format failed_items_summary
-          def format_failed_summary(failed_items: list, max_len: int = 400) -> str | None:
-              if not failed_items:
-                  return None
-              parts = []
-              for item in failed_items[:12]:
-                  name = item.get("name", "?")
-                  count = item.get("errors", 0)
-                  detail = item.get("detail", "")
-                  bit = f"{name}: {count} error(s)"
-                  if detail:
-                      bit += f" ({detail})"
-                  parts.append(bit)
-              text = "; ".join(parts)
-              if len(failed_items) > 12:
-                  text += f"; +{len(failed_items) - 12} more"
-              return text[:max_len]
-
           failed_items_summary = format_failed_summary(failed_items)
 
           # Calculate error_rate_pct
@@ -529,6 +576,16 @@ jobs:
               request_metrics["requests_failed"] = total_failed
               request_metrics["error_rate_pct"] = None
 
+          # Add workflow total duration (from GitHub Actions)
+          workflow_duration = os.getenv("WORKFLOW_DURATION")
+          if workflow_duration:
+              try:
+                  request_metrics["workflow_duration_sec"] = float(workflow_duration)
+              except ValueError:
+                  request_metrics["workflow_duration_sec"] = None
+          else:
+              request_metrics["workflow_duration_sec"] = None
+
           failed_data = {
               "category": category,
               "total_pages_attempted": total_pages_all,
@@ -537,25 +594,21 @@ jobs:
               "failed_pages": all_failed_pages,
           }
 
-          # UPLOAD summary.json (contains request_metrics + failed_items inside)
-          summary_hierarchy_groups = set()
-          for relative_path in excel_groups.keys():
-              parts = relative_path.replace(os.sep, '/').split('/')
-              hierarchy = "/".join(parts[:-2])
-              summary_hierarchy_groups.add(hierarchy)
-
+          # UPLOAD summary.json - aggregate from batch summaries
           summary_by_group = {}
           for batch_dir in batch_dirs:
               for summary_file in glob.glob(os.path.join(batch_dir, "**", "summary.json"), recursive=True):
-                  rel = os.path.relpath(summary_file, batch_dir)
-                  hierarchy = os.path.dirname(os.path.dirname(rel)).replace(os.sep, '/')
-                  with open(summary_file, 'r', encoding='utf-8') as f:
-                      s = json.load(f)
-                  agg = summary_by_group.setdefault(hierarchy, {
-                      "scraped_at": s["scraped_at"],
-                      "data_scraped_date": s["data_scraped_date"],
-                      "saved_to_R2_date": s["saved_to_R2_date"],
-                      "category": s.get("category", ""),
+                  try:
+                      with open(summary_file, 'r', encoding='utf-8') as f:
+                          s = json.load(f)
+                  except Exception:
+                      continue
+
+                  agg = summary_by_group.setdefault(category_path, {
+                      "scraped_at": s.get("scraped_at"),
+                      "data_scraped_date": s.get("data_scraped_date"),
+                      "saved_to_R2_date": s.get("saved_to_R2_date"),
+                      "category": s.get("category", {}),
                       "total_listings": 0,
                       "subcats": {},
                   })
@@ -567,14 +620,13 @@ jobs:
                       else:
                           agg["subcats"][key] = dict(sc)
 
-          # Save summary placeholders for finalization
-          os.makedirs("summaries", exist_ok=True)
-          for hierarchy, agg in summary_by_group.items():
+          for cp, agg in summary_by_group.items():
               summary_data = {
                   "scraped_at": agg["scraped_at"],
                   "data_scraped_date": agg["data_scraped_date"],
                   "saved_to_R2_date": agg["saved_to_R2_date"],
                   "category": agg["category"],
+                  "category_path": cp,
                   "workflow_name": "Sale Property",
                   "total_subcategories": len(agg["subcats"]),
                   "total_listings": agg["total_listings"],
@@ -583,113 +635,10 @@ jobs:
                   "failed_items": failed_items,
                   "failed_items_summary": failed_items_summary,
               }
-              safe_hierarchy = hierarchy.replace("/", "_")
-              placeholder_path = f"summaries/summary_placeholder_{safe_hierarchy}.json"
-              with open(placeholder_path, "w", encoding="utf-8") as f:
-                  json.dump(summary_data, f, ensure_ascii=False, indent=2)
-              print(f"  Saved summary placeholder: {placeholder_path}")
+              r2_key = f"DUAE/{date_prefix}/{cp}/summary/summary.json"
+              client.put_object(Bucket=bucket, Key=r2_key, Body=json.dumps(summary_data, ensure_ascii=False, indent=2).encode('utf-8'),
+                               ContentType='application/json; charset=utf-8')
+              print(f"Uploaded summary: {r2_key}")
 
           print(f"\nDONE: {uploaded_count} files uploaded for {category} | Total rows: {total_rows_all}")
-          EOF
-
-      - name: Upload summary placeholders
-        uses: actions/upload-artifact@v4
-        with:
-          name: summary-${{ matrix.category }}
-          path: summaries/*.json
-          if-no-files-found: ignore
-
-  finalize-summaries:
-    runs-on: ubuntu-latest
-    needs: final_merge
-    if: ${{ always() }}
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install boto3
-
-      - name: Get workflow duration
-        id: workflow_duration
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          STARTED_AT=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }} --jq .run_started_at)
-          START_TIMESTAMP=$(date -d "$STARTED_AT" +%s)
-          NOW_TIMESTAMP=$(date -u +%s)
-          DURATION_SEC=$((NOW_TIMESTAMP - START_TIMESTAMP))
-          echo "duration_sec=$DURATION_SEC" >> "$GITHUB_OUTPUT"
-          echo "Workflow started at: $STARTED_AT"
-          echo "Workflow duration: ${DURATION_SEC}s"
-
-      - name: Download all summary placeholders
-        uses: actions/download-artifact@v4
-        with:
-          pattern: summary-*
-          merge-multiple: true
-          path: summaries/
-
-      - name: Finalize and upload summaries to R2
-        env:
-          CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
-          CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
-          CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
-          CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
-          WORKFLOW_DURATION: ${{ steps.workflow_duration.outputs.duration_sec }}
-        run: |
-          python << 'EOF'
-          import glob
-          import json
-          import os
-          import boto3
-          from datetime import datetime
-
-          dt = datetime.now()
-          date_prefix = f"year={dt.year}/month={dt.strftime('%m')}/day={dt.strftime('%d')}"
-
-          client = boto3.client('s3',
-              endpoint_url=os.environ['CF_R2_ENDPOINT_URL'],
-              aws_access_key_id=os.environ['CF_R2_ACCESS_KEY_ID'],
-              aws_secret_access_key=os.environ['CF_R2_SECRET_ACCESS_KEY'],
-              region_name='auto'
-          )
-          bucket = os.environ['CF_R2_BUCKET_NAME']
-          workflow_duration = os.getenv("WORKFLOW_DURATION")
-
-          summary_files = glob.glob("summaries/*.json")
-          print(f"Found {len(summary_files)} summary placeholder(s)")
-
-          for filepath in summary_files:
-              basename = os.path.basename(filepath)
-              # summary_placeholder_{hierarchy}.json
-              hierarchy = basename.replace("summary_placeholder_", "").replace(".json", "").replace("_", "/")
-              r2_key = f"DUAE/{date_prefix}/{hierarchy}/summary/summary.json"
-
-              with open(filepath, 'r', encoding='utf-8') as f:
-                  summary = json.load(f)
-
-              if workflow_duration:
-                  try:
-                      if "request_metrics" not in summary:
-                          summary["request_metrics"] = {}
-                      summary["request_metrics"]["workflow_duration_sec"] = float(workflow_duration)
-                      print(f"  Added workflow_duration_sec={workflow_duration}s")
-                  except ValueError:
-                      pass
-
-              client.put_object(
-                  Bucket=bucket,
-                  Key=r2_key,
-                  Body=json.dumps(summary, ensure_ascii=False, indent=2).encode('utf-8'),
-                  ContentType='application/json; charset=utf-8'
-              )
-              print(f"  Uploaded: {r2_key}")
-
-          print("\nAll summaries finalized and uploaded!")
           EOF
