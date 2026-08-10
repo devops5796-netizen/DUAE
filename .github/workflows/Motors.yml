@@ -65,7 +65,7 @@ jobs:
                   r = requests.post(URL, params=PARAMS, json=payload, timeout=30)
                   data = r.json()
                   nb_pages = data["results"][0]["nbPages"]
-                  nb_pages = 5
+                  nb_pages = 3
                   print(f"  {category_name}: {nb_pages} pages")
               except Exception as e:
                   print(f"  Failed: {e}")
@@ -340,7 +340,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install boto3
+        run: pip install boto3 python-dotenv
 
       - name: Get workflow duration
         id: workflow_duration

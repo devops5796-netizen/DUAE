@@ -44,10 +44,10 @@ def get_category_path(category_v2_value) -> str:
     """Build R2 folder path from category_v2.slug_paths dynamically.
 
     Example:
-        slug_paths: ['motors', 'motors/used-cars', 'motors/used-cars/alfa-romeo', 'motors/used-cars/alfa-romeo/giulia']
-        -> deepest: 'motors/used-cars/alfa-romeo/giulia'
-        -> parent:  'motors/used-cars'  (keep first 2 segments after 'motors')
-        -> result:  'motors/used-cars'
+        slug_paths: ['motors', 'motors/number-plates', 'motors/number-plates/dubai-plate', 'motors/number-plates/dubai-plate/private-car']
+        -> deepest: 'motors/number-plates/dubai-plate/private-car'  (slug_paths is shallow -> deep, so the LAST element is deepest)
+        -> parent:  'motors/number-plates'  (keep first 2 segments after 'motors')
+        -> result:  'motors/number-plates'
 
     For motors, we take the first 2 meaningful segments (motors + sub-category).
     """
@@ -56,11 +56,11 @@ def get_category_path(category_v2_value) -> str:
     if not slug_paths:
         return "unknown"
 
-    # Take the deepest path (first element)
-    deepest = slug_paths[0]
+    # slug_paths is ordered shallow -> deep, so the deepest path is the LAST element
+    deepest = slug_paths[-1]
     parts = deepest.split("/")
 
-    # For motors: keep first 2 segments (e.g. motors/used-cars)
+    # For motors: keep first 2 segments (e.g. motors/number-plates)
     # If only 1 segment, use it as-is
     if len(parts) >= 2:
         return "/".join(parts[:2])
