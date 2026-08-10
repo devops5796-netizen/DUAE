@@ -364,6 +364,7 @@ jobs:
           import glob
           import os
           import json
+          import shutil
           import boto3
           import pandas as pd
           from datetime import datetime
