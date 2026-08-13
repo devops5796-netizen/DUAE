@@ -39,7 +39,7 @@ jobs:
       #                   region_name='auto'
       #               )
       #       local_file = "monitor/site.yml" 
-      #       object_key = "monitor-sites/DOMAN/site.yml"
+      #       object_key = "monitor-sites/DUAE/site.yml"
       #       client.upload_file(local_file, os.environ['CF_R2_BUCKET_NAME'], object_key)
       #       print(f"Uploaded to {os.environ['CF_R2_BUCKET_NAME']}/{object_key}")
       #       EOF
