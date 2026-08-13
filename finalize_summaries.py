@@ -134,7 +134,7 @@ def finalize_summaries(summaries_dir: str, workflow_name: str = None, aggregate:
 
     workflow_duration = os.getenv("WORKFLOW_DURATION")
     if not workflow_duration:
-        print(" WORKFLOW_DURATION not set. Using fallback 0.")
+        print("\u26a0\ufe0f WORKFLOW_DURATION not set. Using fallback 0.")
         workflow_duration = "0"
 
     try:
@@ -142,7 +142,7 @@ def finalize_summaries(summaries_dir: str, workflow_name: str = None, aggregate:
     except ValueError:
         duration_sec = 0.0
 
-    print(f" Workflow duration: {duration_sec}s")
+    print(f"\u2705 Workflow duration: {duration_sec}s")
 
     patterns = [
         os.path.join(summaries_dir, "*.json"),
