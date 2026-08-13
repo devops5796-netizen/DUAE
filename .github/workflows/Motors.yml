@@ -74,7 +74,6 @@ jobs:
               if nb_pages == 0:
                   continue
               
-              nb_pages = 3
               for i in range(0, nb_pages, PAGES_PER_JOB):
                   start = i
                   end = min(i + PAGES_PER_JOB - 1, nb_pages - 1)
