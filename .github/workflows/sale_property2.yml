@@ -1,8 +1,8 @@
-name: Sale Property
+name: Sale Property2
 
 on:
   workflow_run:
-    workflows: ["Motors"]
+    workflows: ["Sale Property"]
     types:
       - completed
   workflow_dispatch:
@@ -42,14 +42,14 @@ jobs:
           }
 
           CATEGORIES = {
-                "sale_commercial": {
-                    "index": "property-for-sale-commercial.com",
-                    "filter": '("category_v2.slug_paths":"property-for-sale/commercial")',
+                "sale_residential": {
+                    "index": "property-for-sale-residential.com",
+                    "filter": '("category_v2.slug_paths":"property-for-sale/residential")',
                     "hits": []
                 },
-                "sale_land": {
-                    "index": "property-for-sale-land.com",
-                    "filter": '("categories_v2.slug_paths":"property-for-sale/land")',
+                "sale_multiple_units": {
+                    "index": "property-for-sale-multiple-units.com",
+                    "filter": '("categories_v2.slug_paths":"property-for-sale/multiple-units")',
                     "hits": []
                 },
           }
@@ -152,8 +152,8 @@ jobs:
           }
 
           CATEGORIES = {
-              "sale_commercial": {"index": "property-for-sale-commercial.com", "filter": '("category_v2.slug_paths":"property-for-sale/commercial")'},
-              "sale_land": { "index": "property-for-sale-land.com", "filter": '("categories_v2.slug_paths":"property-for-sale/land")', "hits": [] },
+              "sale_residential": {"index": "property-for-sale-residential.com", "filter": '("category_v2.slug_paths":"property-for-sale/residential")'},
+              "sale_multiple_units": { "index": "property-for-sale-multiple-units.com", "filter": '("categories_v2.slug_paths":"property-for-sale/multiple-units")', "hits": [] },
           }
 
           ROWS_PER_BATCH = 500
@@ -303,8 +303,8 @@ jobs:
       max-parallel: 10
       matrix:
         category:
-          - sale_commercial
-          - sale_land
+          - sale_residential
+          - sale_multiple_units
 
     steps:
       - name: Checkout repo
@@ -702,4 +702,4 @@ jobs:
           CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
           WORKFLOW_DURATION: ${{ steps.workflow_duration.outputs.duration_sec }}
         run: |
-          python finalize_summaries.py --summaries-dir summaries/ --workflow "${{ github.workflow }}" --aggregate
+          python finalize_summaries.py --summaries-dir summaries/ --workflow  "${{ github.workflow }}" --aggregate
