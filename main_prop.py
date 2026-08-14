@@ -3,7 +3,9 @@ import json
 import time
 import requests
 import random
+import re
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from request_tracker import tracker
 
 URL = "https://wd0ptz13zs-dsn.algolia.net/1/indexes/*/queries"
@@ -15,6 +17,36 @@ PARAMS = {
 }
 
 CATEGORIES = {
+    "rent_residential": {
+        "index": "property-for-rent-residential.com",
+        "filter": '("category_v2.slug_paths":"property-for-rent/residential")',
+        "hits": []
+    },
+    "rent_commercial": {
+        "index": "property-for-rent-commercial.com",
+        "filter": '("category_v2.slug_paths":"property-for-rent/commercial")',
+        "hits": []
+    },
+    "rent_rooms_rent_flatmates": {
+        "index": "property-for-rent-rooms-for-rent-flatmates.com",
+        "filter": '("category_v2.slug_paths":"property-for-rent/rooms-for-rent-flatmates")',
+        "hits": []
+    },
+    "rent_holiday_homes": {
+        "index": "property-for-rent-holiday-homes.com",
+        "filter": '("categories.slug_paths":"property-for-rent/holiday-homes")',
+        "hits": []
+    },
+    "rent_short_term_monthly": {
+        "index": "property-for-rent-short-term.com",
+        "filter": '("categories_v2.slug_paths":"property-for-rent/short-term")',
+        "hits": []
+    },
+    "rent_short_term_daily": {
+        "index": "property-for-rent-short-term-daily.com",
+        "filter": '("category_v2.slug_paths":"property-for-rent/short-term-daily")',
+        "hits": []
+    },
     "sale_residential": {
         "index": "property-for-sale-residential.com",
         "filter": '("category_v2.slug_paths":"property-for-sale/residential")',
@@ -35,31 +67,74 @@ CATEGORIES = {
         "filter": '("categories_v2.slug_paths":"property-for-sale/multiple-units")',
         "hits": []
     },
+    "jobs": {
+        "index": "by_added_desc_jobs.com",
+        "filter": '("category_v2.slug_paths":"jobs")',
+        "hits": []
+    },
+    "jobs_wanted": {
+        "index": "by_added_desc_jobs-wanted.com",
+        "filter": '("category_v2.slug_paths":"jobs-wanted")',
+        "hits": []
+    }
 }
 
-TARGET_DATE = datetime.now(timezone.utc).date() - timedelta(days=1)
+
+dubai_now = datetime.now(ZoneInfo("Asia/Dubai"))
+TARGET_DATE = (dubai_now.date() - timedelta(days=1))
+
+
+def _get_url(absolute_url_value):
+    """Extract URL string from absolute_url field (dict or string)."""
+    if isinstance(absolute_url_value, dict):
+        return absolute_url_value.get("en") or absolute_url_value.get("ar")
+    if isinstance(absolute_url_value, str):
+        return absolute_url_value
+    return None
+
+
+def extract_date_from_url(url: str):
+    """Extract posted date from dubizzle URL path like /2026/7/1/ or /2026/12/25/"""
+    if not url:
+        return None
+    match = re.search(r'/(\d{4})/(\d{1,2})/(\d{1,2})/', url)
+    if match:
+        year, month, day = int(match.group(1)), int(match.group(2)), int(match.group(3))
+        try:
+            return datetime(year, month, day).date()
+        except ValueError:
+            return None
+    return None
+
+
+def get_date_from_timestamp(timestamp_value):
+    """Convert Unix timestamp to Dubai date."""
+    if timestamp_value is None:
+        return None
+    try:
+        dt = datetime.fromtimestamp(int(timestamp_value), tz=timezone.utc)
+        return dt.astimezone(ZoneInfo("Asia/Dubai")).date()
+    except (ValueError, TypeError):
+        return None
 
 
 def filter_yesterday_hits(hits):
     filtered = []
 
     for hit in hits:
-        timestamp_value = hit.get("created_at")
+        post_date = None
 
-        if timestamp_value is None:
-            timestamp_value = hit.get("added")
+        post_date = get_date_from_timestamp(hit.get("created_at"))
 
-        if timestamp_value is None:
+        if post_date is None:
+            url = _get_url(hit.get("absolute_url"))
+            post_date = extract_date_from_url(url)
+
+        if post_date is None:
             continue
 
-        try:
-            dt = datetime.fromtimestamp(int(timestamp_value), tz=timezone.utc)
-
-            if dt.date() == TARGET_DATE:
-                filtered.append(hit)
-
-        except (ValueError, TypeError):
-            pass
+        if post_date == TARGET_DATE:
+            filtered.append(hit)
 
     return filtered
 
@@ -96,7 +171,7 @@ def run(category_name: str, start_page: int, end_page: int, output_jsonl: str) -
         return {"success": 0, "failed": 0, "failed_pages": [], "total_pages": 0}
 
     category = CATEGORIES[category_name]
-    print(f"Scraping {category_name} | pages {start_page}-{end_page}")
+    print(f"Scraping {category_name} | pages {start_page}-{end_page} | Target date: {TARGET_DATE}")
 
     hits = []
     failed_pages = []
@@ -120,7 +195,7 @@ def run(category_name: str, start_page: int, end_page: int, output_jsonl: str) -
             filtered_hits = filter_yesterday_hits(page_hits)
             print(
                 f"  Page {page}: {len(page_hits)} listings "
-                f"-> kept {len(filtered_hits)}"
+                f"-> kept {len(filtered_hits)} (target: {TARGET_DATE})"
             )
             hits.extend(filtered_hits)
 
