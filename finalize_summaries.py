@@ -172,7 +172,10 @@ def finalize_summaries(summaries_dir: str, workflow_name: str = None, aggregate:
                 basename = os.path.basename(filepath)
                 if basename.startswith("summary_placeholder_"):
                     cat = basename.replace("summary_placeholder_", "").replace(".json", "")
-                    cp = cat.replace("_", "/")
+                    if cat.startswith("motors_"):
+                        cp = cat.replace("_", "/", 1)
+                    else:
+                        cp = f"motors/{cat.replace('_', '-')}"
                 else:
                     cp = "unknown"
             by_path.setdefault(cp, []).append(filepath)

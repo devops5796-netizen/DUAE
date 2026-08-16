@@ -695,7 +695,7 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
                 json_files.append(json_path)
 
         dt = datetime.now(timezone.utc)
-        category_path = get_category_path(group_df["category_v2"].iloc[0]) if not group_df.empty and "category_v2" in group_df.columns else f"{safe_cat0}/{safe_cat1}"
+        category_path = f"{safe_cat0}/{category_name.replace('_', '-')}"
         summary = build_group_summary(sheets, group_df, safe_cat0, safe_cat1, dt, output_base_dir, category_path)
         summary_file_path = os.path.join(summary_dir, "summary.json")
         with open(summary_file_path, "w", encoding="utf-8") as f:

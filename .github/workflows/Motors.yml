@@ -266,9 +266,9 @@ jobs:
                   break
 
           if not category_path:
-              category_path = category.replace("_", "/")
-              print(f"Warning: category_path not found in summaries, using fallback: {category_path}")
-
+            category_path = f"motors/{category.replace('_', '-')}"
+            print(f"Warning: category_path not found in summaries, using fallback: {category_path}")
+          
           print(f"Using category_path: {category_path}")
 
           # Upload Excel files
