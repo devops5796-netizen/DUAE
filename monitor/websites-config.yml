@@ -23,25 +23,25 @@ scrapers:
     url: https://uae.dubizzle.com/motors/used-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/used_cars"
+    r2_path: "{r2_bucket}/DUAE/Motors/used-cars"
 
   - name: new_cars (Motors)
     url: https://uae.dubizzle.com/motors/new-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/new_cars"
+    r2_path: "{r2_bucket}/DUAE/Motors/new-cars"
 
   - name: export_cars (Motors)
     url: https://uae.dubizzle.com/motors/export-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/export_cars"
+    r2_path: "{r2_bucket}/DUAE/Motors/export-cars"
 
   - name: rental_cars (Motors)
     url: https://uae.dubizzle.com/motors/rental-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/rental_cars"
+    r2_path: "{r2_bucket}/DUAE/Motors/rental-cars"
 
   - name: motorcycles (Motors)
     url: https://uae.dubizzle.com/motors/motorcycles/
@@ -53,13 +53,13 @@ scrapers:
     url: https://uae.dubizzle.com/motors/auto-accessories-parts/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/auto_accessories_parts"
+    r2_path: "{r2_bucket}/DUAE/Motors/auto-accessories-parts"
 
   - name: heavy_vehicles (Motors)
     url: https://uae.dubizzle.com/motors/heavy-vehicles/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/heavy_vehicles"
+    r2_path: "{r2_bucket}/DUAE/Motors/heavy-vehicles"
 
   - name: boats (Motors)
     url: https://uae.dubizzle.com/motors/boats/
@@ -71,7 +71,7 @@ scrapers:
     url: https://uae.dubizzle.com/motors/number-plates/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/number_plates"
+    r2_path: "{r2_bucket}/DUAE/Motors/number-plates"
 
   - name: sale_residential (property)
     url: https://uae.dubizzle.com/en/property-for-sale/residential/
@@ -149,43 +149,43 @@ scrapers:
     url: https://uae.dubizzle.com/classified/computers-networking/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/computers_networking"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/computers-networking"
 
   - name: business_industrial (Classifieds)
     url: https://uae.dubizzle.com/classified/business-industrial/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/business_industrial"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/business-industrial"
 
   - name: home_appliances (Classifieds)
     url: https://uae.dubizzle.com/classified/home-appliances/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/home_appliances"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/home-appliances"
 
   - name: sports_equipment (Classifieds)
     url: https://uae.dubizzle.com/classified/sports-equipment/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/sports_equipment"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/sports-equipment"
 
   - name: clothing_accessories (Classifieds)
     url: https://uae.dubizzle.com/classified/clothing-accessories/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/clothing_accessories"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/clothing-accessories"
 
   - name: cameras_imaging (Classifieds)
     url: https://uae.dubizzle.com/classified/cameras-imaging/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/cameras_imaging"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/cameras-imaging"
 
   - name: jewelry_watches (Classifieds)
     url: https://uae.dubizzle.com/classified/jewelry-watches/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/jewelry_watches"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/jewelry-watches"
 
   - name: pets (Classifieds)
     url: https://uae.dubizzle.com/classified/pets/
@@ -197,7 +197,7 @@ scrapers:
     url: https://uae.dubizzle.com/classified/musical-instruments/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/musical_instruments"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/musical-instruments"
 
   - name: gaming (Classifieds)
     url: https://uae.dubizzle.com/classified/gaming/
@@ -209,7 +209,7 @@ scrapers:
     url: https://uae.dubizzle.com/classified/baby-items/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/baby_items"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/baby-items"
 
   - name: toys (Classifieds)
     url: https://uae.dubizzle.com/classified/toys/
@@ -221,7 +221,7 @@ scrapers:
     url: https://uae.dubizzle.com/classified/tickets-vouchers/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/tickets_vouchers"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/tickets-vouchers"
 
   - name: collectibles (Classifieds)
     url: https://uae.dubizzle.com/classified/collectibles/
@@ -245,7 +245,7 @@ scrapers:
     url: https://uae.dubizzle.com/classified/free-stuff/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/free_stuff"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/free-stuff"
 
   - name: lostfound (Classifieds)
     url: https://uae.dubizzle.com/classified/lostfound/
@@ -257,31 +257,31 @@ scrapers:
     url: https://uae.dubizzle.com/classified/dvds-movies/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/dvds_movies"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/dvds-movies"
 
   - name: furniture_home_garden (Classifieds)
     url: https://uae.dubizzle.com/classified/furniture-home-garden/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/furniture_home_garden"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/furniture-home-garden"
 
   - name: mobile_phones_pdas (Classifieds)
     url: https://uae.dubizzle.com/classified/mobile-phones-pdas/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/mobile_phones_pdas"
+    r2_path: "{r2_bucket}/DUAE/Classifieds/mobile-phones-pdas"
 
   - name: auto_services (Community)
     url: https://uae.dubizzle.com/community/auto-services/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/auto_services"
+    r2_path: "{r2_bucket}/DUAE/Community/auto-services"
 
   - name: consultancy_services (Community)
     url: https://uae.dubizzle.com/community/consultancy-services/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/consultancy_services"
+    r2_path: "{r2_bucket}/DUAE/Community/consultancy-services"
 
   - name: domestic (Community)
     url: https://uae.dubizzle.com/community/domestic/
@@ -293,7 +293,7 @@ scrapers:
     url: https://uae.dubizzle.com/community/event-entertainment/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/event_entertainment"
+    r2_path: "{r2_bucket}/DUAE/Community/event-entertainment"
 
   - name: freelancers (Community)
     url: https://uae.dubizzle.com/community/freelancers/
@@ -305,55 +305,55 @@ scrapers:
     url: https://uae.dubizzle.com/community/health-wellbeing-services/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/health_wellbeing_services"
+    r2_path: "{r2_bucket}/DUAE/Community/health-wellbeing-services"
 
   - name: home_maintenance (Community)
     url: https://uae.dubizzle.com/community/home-maintenance/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/home_maintenance"
+    r2_path: "{r2_bucket}/DUAE/Community/home-maintenance"
 
   - name: movers_removals (Community)
     url: https://uae.dubizzle.com/community/movers-removals/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/movers_removals"
+    r2_path: "{r2_bucket}/DUAE/Community/movers-removals"
 
   - name: other_services (Community)
     url: https://uae.dubizzle.com/community/other-services/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/other_services"
+    r2_path: "{r2_bucket}/DUAE/Community/other-services"
 
   - name: restoration_repairs (Community)
     url: https://uae.dubizzle.com/community/restoration-repairs/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/restoration_repairs"
+    r2_path: "{r2_bucket}/DUAE/Community/restoration-repairs"
 
   - name: tutors_classes (Community)
     url: https://uae.dubizzle.com/community/tutors-classes/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/tutors_classes"
+    r2_path: "{r2_bucket}/DUAE/Community/tutors-classes"
 
   - name: web_computer_services (Community)
     url: https://uae.dubizzle.com/community/web-computer-services/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/web_computer_services"
+    r2_path: "{r2_bucket}/DUAE/Community/web-computer-services"
 
   - name: Jobs (Jobs)
     url: https://uae.dubizzle.com/jobs/search/
     batch: "Jobs"
     workflow_file: jobs.yml
-    r2_path: "{r2_bucket}/DUAE/Jobs"
+    r2_path: "{r2_bucket}/DUAE/jobs"
 
   - name: Jobs_Wanted (Jobs)
     url: https://uae.dubizzle.com/jobs-wanted/search/
     batch: "Jobs"
     workflow_file: jobs.yml
-    r2_path: "{r2_bucket}/DUAE/Jobs_Wanted"
+    r2_path: "{r2_bucket}/DUAE/jobs-wanted"
   
 # ------------------------------------------------------------
 # PIPELINE CHAIN (auto-detected from workflow triggers)
