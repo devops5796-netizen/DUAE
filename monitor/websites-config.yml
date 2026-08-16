@@ -23,55 +23,55 @@ scrapers:
     url: https://uae.dubizzle.com/motors/used-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/used-cars"
+    r2_path: "{r2_bucket}/DUAE/motors/used-cars"
 
   - name: new_cars (Motors)
     url: https://uae.dubizzle.com/motors/new-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/new-cars"
+    r2_path: "{r2_bucket}/DUAE/motors/new-cars"
 
   - name: export_cars (Motors)
     url: https://uae.dubizzle.com/motors/export-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/export-cars"
+    r2_path: "{r2_bucket}/DUAE/motors/export-cars"
 
   - name: rental_cars (Motors)
     url: https://uae.dubizzle.com/motors/rental-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/rental-cars"
+    r2_path: "{r2_bucket}/DUAE/motors/rental-cars"
 
   - name: motorcycles (Motors)
     url: https://uae.dubizzle.com/motors/motorcycles/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/motorcycles"
+    r2_path: "{r2_bucket}/DUAE/motors/motorcycles"
 
   - name: auto_accessories_parts (Motors)
     url: https://uae.dubizzle.com/motors/auto-accessories-parts/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/auto-accessories-parts"
+    r2_path: "{r2_bucket}/DUAE/motors/auto-accessories-parts"
 
   - name: heavy_vehicles (Motors)
     url: https://uae.dubizzle.com/motors/heavy-vehicles/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/heavy-vehicles"
+    r2_path: "{r2_bucket}/DUAE/motors/heavy-vehicles"
 
   - name: boats (Motors)
     url: https://uae.dubizzle.com/motors/boats/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/boats"
+    r2_path: "{r2_bucket}/DUAE/motors/boats"
 
   - name: number_plates (Motors)
     url: https://uae.dubizzle.com/motors/number-plates/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/number-plates"
+    r2_path: "{r2_bucket}/DUAE/motors/number-plates"
 
   - name: sale_residential (property)
     url: https://uae.dubizzle.com/en/property-for-sale/residential/
@@ -139,209 +139,209 @@ scrapers:
     workflow_file: rent_property2.yml
     r2_path: "{r2_bucket}/DUAE/property/property-for-rent/short-term-daily"
 
-  - name: electronics (Classifieds)
+  - name: electronics (classified)
     url: https://uae.dubizzle.com/classified/electronics/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/electronics"
+    r2_path: "{r2_bucket}/DUAE/classified/electronics"
   
-  - name: computers_networking (Classifieds)
+  - name: computers_networking (classified)
     url: https://uae.dubizzle.com/classified/computers-networking/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/computers-networking"
+    r2_path: "{r2_bucket}/DUAE/classified/computers-networking"
 
-  - name: business_industrial (Classifieds)
+  - name: business_industrial (classified)
     url: https://uae.dubizzle.com/classified/business-industrial/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/business-industrial"
+    r2_path: "{r2_bucket}/DUAE/classified/business-industrial"
 
-  - name: home_appliances (Classifieds)
+  - name: home_appliances (classified)
     url: https://uae.dubizzle.com/classified/home-appliances/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/home-appliances"
+    r2_path: "{r2_bucket}/DUAE/classified/home-appliances"
 
-  - name: sports_equipment (Classifieds)
+  - name: sports_equipment (classified)
     url: https://uae.dubizzle.com/classified/sports-equipment/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/sports-equipment"
+    r2_path: "{r2_bucket}/DUAE/classified/sports-equipment"
 
-  - name: clothing_accessories (Classifieds)
+  - name: clothing_accessories (classified)
     url: https://uae.dubizzle.com/classified/clothing-accessories/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/clothing-accessories"
+    r2_path: "{r2_bucket}/DUAE/classified/clothing-accessories"
 
-  - name: cameras_imaging (Classifieds)
+  - name: cameras_imaging (classified)
     url: https://uae.dubizzle.com/classified/cameras-imaging/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/cameras-imaging"
+    r2_path: "{r2_bucket}/DUAE/classified/cameras-imaging"
 
-  - name: jewelry_watches (Classifieds)
+  - name: jewelry_watches (classified)
     url: https://uae.dubizzle.com/classified/jewelry-watches/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/jewelry-watches"
+    r2_path: "{r2_bucket}/DUAE/classified/jewelry-watches"
 
-  - name: pets (Classifieds)
+  - name: pets (classified)
     url: https://uae.dubizzle.com/classified/pets/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/pets"
+    r2_path: "{r2_bucket}/DUAE/classified/pets"
 
-  - name: musical_instruments (Classifieds)
+  - name: musical_instruments (classified)
     url: https://uae.dubizzle.com/classified/musical-instruments/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/musical-instruments"
+    r2_path: "{r2_bucket}/DUAE/classified/musical-instruments"
 
-  - name: gaming (Classifieds)
+  - name: gaming (classified)
     url: https://uae.dubizzle.com/classified/gaming/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/gaming"
+    r2_path: "{r2_bucket}/DUAE/classified/gaming"
 
-  - name: baby_items (Classifieds)
+  - name: baby_items (classified)
     url: https://uae.dubizzle.com/classified/baby-items/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/baby-items"
+    r2_path: "{r2_bucket}/DUAE/classified/baby-items"
 
-  - name: toys (Classifieds)
+  - name: toys (classified)
     url: https://uae.dubizzle.com/classified/toys/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/toys"
+    r2_path: "{r2_bucket}/DUAE/classified/toys"
 
-  - name: tickets_vouchers (Classifieds)
+  - name: tickets_vouchers (classified)
     url: https://uae.dubizzle.com/classified/tickets-vouchers/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/tickets-vouchers"
+    r2_path: "{r2_bucket}/DUAE/classified/tickets-vouchers"
 
-  - name: collectibles (Classifieds)
+  - name: collectibles (classified)
     url: https://uae.dubizzle.com/classified/collectibles/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/collectibles"
+    r2_path: "{r2_bucket}/DUAE/classified/collectibles"
 
-  - name: books (Classifieds)
+  - name: books (classified)
     url: https://uae.dubizzle.com/classified/books/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/books"
+    r2_path: "{r2_bucket}/DUAE/classified/books"
 
-  - name: music (Classifieds)
+  - name: music (classified)
     url: https://uae.dubizzle.com/classified/music/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/music"
+    r2_path: "{r2_bucket}/DUAE/classified/music"
 
-  - name: free_stuff (Classifieds)
+  - name: free_stuff (classified)
     url: https://uae.dubizzle.com/classified/free-stuff/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/free-stuff"
+    r2_path: "{r2_bucket}/DUAE/classified/free-stuff"
 
-  - name: lostfound (Classifieds)
+  - name: lostfound (classified)
     url: https://uae.dubizzle.com/classified/lostfound/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/lostfound"
+    r2_path: "{r2_bucket}/DUAE/classified/lostfound"
 
-  - name: dvds_movies (Classifieds)
+  - name: dvds_movies (classified)
     url: https://uae.dubizzle.com/classified/dvds-movies/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/dvds-movies"
+    r2_path: "{r2_bucket}/DUAE/classified/dvds-movies"
 
-  - name: furniture_home_garden (Classifieds)
+  - name: furniture_home_garden (classified)
     url: https://uae.dubizzle.com/classified/furniture-home-garden/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/furniture-home-garden"
+    r2_path: "{r2_bucket}/DUAE/classified/furniture-home-garden"
 
-  - name: mobile_phones_pdas (Classifieds)
+  - name: mobile_phones_pdas (classified)
     url: https://uae.dubizzle.com/classified/mobile-phones-pdas/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Classifieds/mobile-phones-pdas"
+    r2_path: "{r2_bucket}/DUAE/classified/mobile-phones-pdas"
 
-  - name: auto_services (Community)
+  - name: auto_services (community)
     url: https://uae.dubizzle.com/community/auto-services/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/auto-services"
+    r2_path: "{r2_bucket}/DUAE/community/auto-services"
 
-  - name: consultancy_services (Community)
+  - name: consultancy_services (community)
     url: https://uae.dubizzle.com/community/consultancy-services/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/consultancy-services"
+    r2_path: "{r2_bucket}/DUAE/community/consultancy-services"
 
-  - name: domestic (Community)
+  - name: domestic (community)
     url: https://uae.dubizzle.com/community/domestic/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/domestic"
+    r2_path: "{r2_bucket}/DUAE/community/domestic"
 
-  - name: event_entertainment (Community)
+  - name: event_entertainment (community)
     url: https://uae.dubizzle.com/community/event-entertainment/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/event-entertainment"
+    r2_path: "{r2_bucket}/DUAE/community/event-entertainment"
 
-  - name: freelancers (Community)
+  - name: freelancers (community)
     url: https://uae.dubizzle.com/community/freelancers/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/freelancers"
+    r2_path: "{r2_bucket}/DUAE/community/freelancers"
 
-  - name: health_wellbeing_services (Community)
+  - name: health_wellbeing_services (community)
     url: https://uae.dubizzle.com/community/health-wellbeing-services/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/health-wellbeing-services"
+    r2_path: "{r2_bucket}/DUAE/community/health-wellbeing-services"
 
-  - name: home_maintenance (Community)
+  - name: home_maintenance (community)
     url: https://uae.dubizzle.com/community/home-maintenance/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/home-maintenance"
+    r2_path: "{r2_bucket}/DUAE/community/home-maintenance"
 
-  - name: movers_removals (Community)
+  - name: movers_removals (community)
     url: https://uae.dubizzle.com/community/movers-removals/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/movers-removals"
+    r2_path: "{r2_bucket}/DUAE/community/movers-removals"
 
-  - name: other_services (Community)
+  - name: other_services (community)
     url: https://uae.dubizzle.com/community/other-services/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/other-services"
+    r2_path: "{r2_bucket}/DUAE/community/other-services"
 
-  - name: restoration_repairs (Community)
+  - name: restoration_repairs (community)
     url: https://uae.dubizzle.com/community/restoration-repairs/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/restoration-repairs"
+    r2_path: "{r2_bucket}/DUAE/community/restoration-repairs"
 
-  - name: tutors_classes (Community)
+  - name: tutors_classes (community)
     url: https://uae.dubizzle.com/community/tutors-classes/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/tutors-classes"
+    r2_path: "{r2_bucket}/DUAE/community/tutors-classes"
 
-  - name: web_computer_services (Community)
+  - name: web_computer_services (community)
     url: https://uae.dubizzle.com/community/web-computer-services/
     batch: "Classifieds & Community"
     workflow_file: classifieds_community.yml
-    r2_path: "{r2_bucket}/DUAE/Community/web-computer-services"
+    r2_path: "{r2_bucket}/DUAE/community/web-computer-services"
 
   - name: Jobs (Jobs)
     url: https://uae.dubizzle.com/jobs/search/
@@ -1884,7 +1884,7 @@ excel_schema:
 
   # ── BATCH Classifieds_Community ─────────────────────────────────────────────────
 
-  - scraper: electronics (Classifieds)
+  - scraper: electronics (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1892,7 +1892,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: computers_networking (Classifieds)
+  - scraper: computers_networking (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1900,7 +1900,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: business_industrial (Classifieds)
+  - scraper: business_industrial (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1908,7 +1908,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: home_appliances (Classifieds)
+  - scraper: home_appliances (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1916,7 +1916,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: sports_equipment (Classifieds)
+  - scraper: sports_equipment (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1924,7 +1924,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: clothing_accessories (Classifieds)
+  - scraper: clothing_accessories (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1932,7 +1932,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: cameras_imaging (Classifieds)
+  - scraper: cameras_imaging (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1940,7 +1940,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: jewelry_watches (Classifieds)
+  - scraper: jewelry_watches (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1948,7 +1948,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
   
-  - scraper: pets (Classifieds)
+  - scraper: pets (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1956,7 +1956,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: musical_instruments (Classifieds)
+  - scraper: musical_instruments (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1964,7 +1964,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: gaming (Classifieds)
+  - scraper: gaming (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1972,7 +1972,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: baby_items (Classifieds)
+  - scraper: baby_items (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1980,7 +1980,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: toys (Classifieds)
+  - scraper: toys (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1988,7 +1988,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: tickets_vouchers (Classifieds)
+  - scraper: tickets_vouchers (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1996,7 +1996,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: collectibles (Classifieds)
+  - scraper: collectibles (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2004,7 +2004,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: books (Classifieds)
+  - scraper: books (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2012,7 +2012,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: music (Classifieds)
+  - scraper: music (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2020,7 +2020,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: free_stuff (Classifieds)
+  - scraper: free_stuff (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2028,7 +2028,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: lostfound (Classifieds)
+  - scraper: lostfound (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2036,7 +2036,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: dvds_movies (Classifieds)
+  - scraper: dvds_movies (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2044,7 +2044,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: furniture_home_garden (Classifieds)
+  - scraper: furniture_home_garden (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2052,7 +2052,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: mobile_phones_pdas (Classifieds)
+  - scraper: mobile_phones_pdas (classified)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2060,7 +2060,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: auto_services (Community)
+  - scraper: auto_services (community)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2068,7 +2068,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: consultancy_services (Community)
+  - scraper: consultancy_services (community)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2076,7 +2076,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: domestic (Community)
+  - scraper: domestic (community)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2084,7 +2084,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: event_entertainment (Community)
+  - scraper: event_entertainment (community)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2092,7 +2092,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: freelancers (Community)
+  - scraper: freelancers (community)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2100,7 +2100,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: health_wellbeing_services (Community)
+  - scraper: health_wellbeing_services (community)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2108,7 +2108,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: home_maintenance (Community)
+  - scraper: home_maintenance (community)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2116,7 +2116,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: movers_removals (Community)
+  - scraper: movers_removals (community)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2124,7 +2124,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: other_services (Community)
+  - scraper: other_services (community)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2132,7 +2132,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: restoration_repairs (Community)
+  - scraper: restoration_repairs (community)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2140,7 +2140,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: tutors_classes (Community)
+  - scraper: tutors_classes (community)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2148,7 +2148,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: web_computer_services (Community)
+  - scraper: web_computer_services (community)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2218,40 +2218,40 @@ alert_thresholds:
     rent_holiday_homes (property): 5
     rent_short_term_monthly (property): 5
     rent_short_term_daily (property): 5
-    electronics (Classifieds): 5
-    computers_networking (Classifieds): 5
-    business_industrial (Classifieds): 5
-    home_appliances (Classifieds): 5
-    sports_equipment (Classifieds): 5
-    clothing_accessories (Classifieds): 5
-    cameras_imaging (Classifieds): 5
-    jewelry_watches (Classifieds): 5
-    pets (Classifieds): 5
-    musical_instruments (Classifieds): 5
-    gaming (Classifieds): 5
-    baby_items (Classifieds): 5
-    toys (Classifieds): 5
-    tickets_vouchers (Classifieds): 5
-    collectibles (Classifieds): 5
-    books (Classifieds): 5
-    music (Classifieds): 5
-    free_stuff (Classifieds): 5
-    lostfound (Classifieds): 5 
-    dvds_movies (Classifieds): 5
-    furniture_home_garden (Classifieds): 5
-    mobile_phones_pdas (Classifieds): 5
-    auto_services (Community): 5
-    consultancy_services (Community): 5
-    domestic (Community): 5
-    event_entertainment (Community): 5
-    freelancers (Community): 5
-    health_wellbeing_services (Community): 5
-    home_maintenance (Community): 5
-    movers_removals (Community): 5
-    other_services (Community): 5
-    restoration_repairs (Community): 5
-    tutors_classes (Community): 5
-    web_computer_services (Community): 5
+    electronics (classified): 5
+    computers_networking (classified): 5
+    business_industrial (classified): 5
+    home_appliances (classified): 5
+    sports_equipment (classified): 5
+    clothing_accessories (classified): 5
+    cameras_imaging (classified): 5
+    jewelry_watches (classified): 5
+    pets (classified): 5
+    musical_instruments (classified): 5
+    gaming (classified): 5
+    baby_items (classified): 5
+    toys (classified): 5
+    tickets_vouchers (classified): 5
+    collectibles (classified): 5
+    books (classified): 5
+    music (classified): 5
+    free_stuff (classified): 5
+    lostfound (classified): 5 
+    dvds_movies (classified): 5
+    furniture_home_garden (classified): 5
+    mobile_phones_pdas (classified): 5
+    auto_services (community): 5
+    consultancy_services (community): 5
+    domestic (community): 5
+    event_entertainment (community): 5
+    freelancers (community): 5
+    health_wellbeing_services (community): 5
+    home_maintenance (community): 5
+    movers_removals (community): 5
+    other_services (community): 5
+    restoration_repairs (community): 5
+    tutors_classes (community): 5
+    web_computer_services (community): 5
     Jobs (Jobs): 5
     Jobs_Wanted (Jobs): 5
 
