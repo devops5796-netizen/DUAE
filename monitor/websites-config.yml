@@ -385,7 +385,7 @@ pipeline_chain:
   - batch: "Rent Property2"
     trigger: "cron: '0 0 * * *'"
     triggers_next: null
-    
+
 # ============================================================
 # EXCEL SCHEMA — Per-scraper .xlsx output validation
 # One entry per scraper; each describes the sheets, required
@@ -440,7 +440,6 @@ _col_boats_and_auto_accessories_parts_listing: &col_boats_and_auto_accessories_p
   - price
   - price_type
   - seller_account_type
-  - seo_links
   - site
   - stock_level
   - tags
@@ -454,6 +453,7 @@ _col_boats_and_auto_accessories_parts_listing: &col_boats_and_auto_accessories_p
   - kilometers
   - seller_type
   - year
+  - description_full
 
 _col_sale_cars_listing: &col_sale_cars_listing
   - absolute_url
@@ -501,7 +501,6 @@ _col_sale_cars_listing: &col_sale_cars_listing
   - price
   - price_type
   - seller_account_type
-  - seo_links
   - site
   - stock_level
   - tags
@@ -532,6 +531,7 @@ _col_sale_cars_listing: &col_sale_cars_listing
   - seller_type
   - video_url
   - year
+  - description_full
 
 _col_rental_cars_listing: &col_renal_cars_listing
   - absolute_url
@@ -579,7 +579,6 @@ _col_rental_cars_listing: &col_renal_cars_listing
   - price
   - price_type
   - seller_account_type
-  - seo_links
   - site
   - stock_level
   - tags
@@ -603,6 +602,7 @@ _col_rental_cars_listing: &col_renal_cars_listing
   - seller_type
   - weekly_rental_price
   - year
+  - description_full
 
 _col_number_plates_listing: &col_number_plates_listing
   - absolute_url
@@ -650,7 +650,6 @@ _col_number_plates_listing: &col_number_plates_listing
   - price
   - price_type
   - seller_account_type
-  - seo_links
   - site
   - stock_level
   - tags
@@ -662,6 +661,7 @@ _col_number_plates_listing: &col_number_plates_listing
   - _distinctSeqID
   - plate_code
   - plate_number_length
+  - description_full
 
 _col_motorcycles_listing: &col_motorcycles_listing
   - absolute_url
@@ -709,7 +709,6 @@ _col_motorcycles_listing: &col_motorcycles_listing
   - price
   - price_type
   - seller_account_type
-  - seo_links
   - site
   - stock_level
   - tags
@@ -725,6 +724,7 @@ _col_motorcycles_listing: &col_motorcycles_listing
   - seller_type
   - wheels
   - year
+  - description_full
  
 _col_heavy_vehicles_listing: &col_heavy_vehicles_listing
   - absolute_url
@@ -772,7 +772,6 @@ _col_heavy_vehicles_listing: &col_heavy_vehicles_listing
   - price
   - price_type
   - seller_account_type
-  - seo_links
   - site
   - stock_level
   - tags
@@ -793,6 +792,161 @@ _col_heavy_vehicles_listing: &col_heavy_vehicles_listing
   - kilometers
   - seller_type
   - year
+  - description_full
+
+_col_rent_residential: &col_rent_residential
+  - active
+  - agent
+  - amenities_v2
+  - size
+  - payment_frequency
+  - description_short
+  - trucheck_verified_at
+  - listed_by
+  - seo_links
+  - photos_count
+  - price
+  - photos
+  - is_verified_user
+  - name
+  - bathrooms
+  - language
+  - building
+  - uuid
+  - is_price_hidden
+  - neighborhoods
+  - map_geo
+  - highlighted_ad
+  - places
+  - agency_fees
+  - location_path
+  - feed_id
+  - category_v2
+  - added
+  - completion_status
+  - has_sms_number
+  - verification_state
+  - uri
+  - bedrooms
+  - category_id
+  - agency_tier
+  - is_developer_listing
+  - id
+  - can_chat
+  - agent_profile
+  - _geoloc
+  - is_premium_ad
+  - area_prime_slot_id
+  - city
+  - furnished
+  - has_whatsapp_number
+  - video_url
+  - ranking
+  - external_id
+  - description
+  - tour_360
+  - property_reference
+  - allowed_pages
+  - ranking_v2
+  - absolute_url
+  - has_tour_url
+  - landmarks
+  - site
+  - is_verified_business
+  - has_video_url
+  - has_dld_history
+  - plot_area
+  - promoted
+  - user_id
+  - lookup_attributes
+  - is_premium
+  - tour_url
+  - property_info
+  - featured_listing
+  - chat_enabled
+  - is_verified
+  - is_dkf827492
+  - objectID
+  - amenities
+  - description_full
+
+_col_rent_rooms_rent_flatmates: &col_rent_rooms_rent_flatmates
+  - feed_id
+  - size
+  - has_tour_url
+  - lookup_attributes
+  - badges
+  - plot_area
+  - uuid
+  - is_price_hidden
+  - video_url
+  - highlighted_ad
+  - category_v2
+  - _geoloc
+  - chat_enabled
+  - property_reference
+  - has_sms_number
+  - trucheck_verified_at
+  - room_type
+  - city
+  - active
+  - price
+  - furnished
+  - category_id
+  - has_whatsapp_number
+  - neighborhoods
+  - has_dld_history
+  - id
+  - photos
+  - is_premium
+  - payment_frequency
+  - area_prime_slot_id
+  - description
+  - added
+  - ranking
+  - uri
+  - landmarks
+  - description_short
+  - balcony
+  - allowed_pages
+  - preferred_nationality
+  - preferred_tenants_type
+  - is_verified_business
+  - tour_360
+  - no_of_tenants
+  - places
+  - attached_bathroom
+  - is_dkf827492
+  - room_features
+  - external_id
+  - name
+  - is_verified_user
+  - property_info
+  - amenities_v2
+  - completion_status
+  - agent
+  - location_path
+  - agent_profile
+  - can_chat
+  - ranking_v2
+  - absolute_url
+  - photos_count
+  - is_verified
+  - featured_listing
+  - verification_state
+  - promoted
+  - tour_url
+  - building
+  - language
+  - has_video_url
+  - is_premium_ad
+  - user_id
+  - security_deposit
+  - site
+  - seo_links
+  - objectID
+  - amenities
+  - description_full
 
 _col_rent_commercial: &col_rent_commercial
   - id
@@ -806,7 +960,6 @@ _col_rent_commercial: &col_rent_commercial
   - completion_status
   - agent_profile
   - category_id
-  - seo_links
   - ranking
   - furnished
   - is_premium_ad
@@ -863,6 +1016,90 @@ _col_rent_commercial: &col_rent_commercial
   - photos_count
   - tour_url
   - agent
+  - objectID
+  - description_full
+
+_col_rent_holiday_homes: &rent_holiday_homes
+  - trucheck_verified_at
+  - amenities_v2
+  - video_url
+  - completion_status
+  - tour_360
+  - property_reference
+  - name
+  - minimum_trip_length
+  - tour_url
+  - places
+  - description
+  - verification_state
+  - is_verified_business
+  - allowed_pages
+  - featured_listing
+  - has_dld_history
+  - user_id
+  - category_id
+  - external_id
+  - building
+  - description_short
+  - discounts
+  - size
+  - added
+  - adults
+  - site
+  - photos
+  - custom_prices
+  - location_path
+  - has_video_url
+  - furnished
+  - neighborhoods
+  - price
+  - maximum_trip_length
+  - is_dkf827492
+  - beds
+  - category_v2
+  - property_info
+  - _geoloc
+  - children
+  - area_prime_slot_id
+  - highlighted_ad
+  - ranking_v2
+  - is_price_hidden
+  - lookup_attributes
+  - agent_profile
+  - payment_frequency
+  - has_tour_url
+  - absolute_url
+  - language
+  - active
+  - availability
+  - ranking
+  - guests
+  - plot_area
+  - is_verified_user
+  - photos_count
+  - uri
+  - can_chat
+  - bedrooms
+  - uuid
+  - promoted
+  - has_whatsapp_number
+  - fees
+  - nightly_price
+  - booking_options
+  - is_premium
+  - special_amenities
+  - chat_enabled
+  - is_verified
+  - default_available
+  - agent
+  - has_sms_number
+  - weekend_price
+  - bathrooms
+  - city
+  - host
+  - id
+  - landmarks
+  - feed_id
   - objectID
   - description_full
 
@@ -933,7 +1170,181 @@ _col_rent_short_term: &col_rent_short_term
   - user_id
   - name
   - category_id
+  - objectID
+  - description_full
+
+_col_sale_residential: &col_sale_residential
+  - project_id
+  - photos
+  - uri
+  - id
+  - handover_year
+  - agent_profile
+  - _geoloc
+  - project_status
+  - has_whatsapp_number
+  - completion_status
+  - payment_plan
+  - category_id
+  - location_path
+  - project_developer_name
+  - tour_360
+  - uuid
+  - furnished
+  - places
+  - is_verified_business
+  - verification_state
+  - is_premium_ad
+  - promoted
+  - ranking
+  - bathrooms
+  - is_premium
+  - ranking_v2
+  - category_v2
+  - is_price_hidden
+  - city
+  - property_reference
+  - external_id
+  - has_dld_history
+  - allowed_pages
+  - has_tour_url
+  - building
+  - pre_handover_payment
+  - user_id
+  - description
+  - amount_paid
+  - price
+  - amenities_v2
+  - area_prime_slot_id
+  - photos_count
+  - agency_tier
+  - sale_type
+  - original_price
+  - tour_url
+  - size
+  - chat_enabled
+  - can_chat
+  - property_info
+  - name
+  - added
+  - is_verified_user
+  - listed_by
+  - neighborhoods
+  - ready_by
+  - plot_area
   - seo_links
+  - agent
+  - video_url
+  - language
+  - handover_date
+  - featured_listing
+  - sale_type_2
+  - is_developer_listing
+  - trucheck_verified_at
+  - annual_community_fee
+  - active
+  - bedrooms
+  - absolute_url
+  - site
+  - is_dkf827492
+  - is_verified
+  - lookup_attributes
+  - has_sms_number
+  - map_geo
+  - has_video_url
+  - total_closing_fee
+  - highlighted_ad
+  - completion_percentage
+  - landmarks
+  - description_short
+  - cash_needed
+  - feed_id
+  - objectID
+  - amenities
+  - description_full
+
+_col_sale_multiple_units: &col_sale_multiple_units
+  - id
+  - photos_count
+  - listed_by
+  - neighborhoods
+  - promoted
+  - absolute_url
+  - highlighted_ad
+  - active
+  - ranking
+  - property_reference
+  - cash_needed
+  - is_price_hidden
+  - external_id
+  - plot_area
+  - category_id
+  - is_verified_user
+  - agent
+  - places
+  - lookup_attributes
+  - description_short
+  - _geoloc
+  - original_price
+  - featured_listing
+  - added
+  - has_sms_number
+  - landmarks
+  - zoned_for
+  - seo_links
+  - trucheck_verified_at
+  - sale_type
+  - handover_year
+  - has_video_url
+  - location_path
+  - size
+  - agency_tier
+  - completion_status
+  - tour_url
+  - amount_paid
+  - photos
+  - area_prime_slot_id
+  - category_v2
+  - handover_date
+  - tour_360
+  - is_premium_ad
+  - can_chat
+  - uri
+  - project_id
+  - chat_enabled
+  - has_whatsapp_number
+  - has_dld_history
+  - name
+  - total_closing_fee
+  - agent_profile
+  - site
+  - property_info
+  - uuid
+  - is_premium
+  - has_tour_url
+  - video_url
+  - city
+  - building
+  - payment_plan
+  - language
+  - completion_percentage
+  - sale_type_2
+  - project_status
+  - pre_handover_payment
+  - user_id
+  - feed_id
+  - photo
+  - price
+  - description
+  - is_verified
+  - project_developer_name
+  - is_verified_business
+  - is_developer_listing
+  - ready_by
+  - verification_state
+  - allowed_pages
+  - is_dkf827492
+  - ranking_v2
   - objectID
   - description_full
 
@@ -963,7 +1374,6 @@ _col_sale_commercial: &col_sale_commercial
   - landmarks
   - video_url
   - price
-  - seo_links
   - sale_type
   - tour_360
   - is_price_hidden
@@ -1068,7 +1478,6 @@ _col_sale_land: &col_sale_land
   - name
   - is_premium_ad
   - cash_needed
-  - seo_links
   - has_dld_history
   - description
   - active
@@ -1153,7 +1562,6 @@ _col_classifieds_community_listing: &col_classifieds_community_listing
   - price_type
   - promoted
   - seller_account_type
-  - seo_links
   - show_trusted_seller_logo
   - site
   - stock_level
@@ -1165,12 +1573,11 @@ _col_classifieds_community_listing: &col_classifieds_community_listing
   - usage
   - user_id
   - uuid
-  - vas
+  - description_full
   
 _col_jobs_wanted_listing: &col_jobs_wanted_listing
   - photos
   - age
-  - photo
   - has_any_verification
   - has_phone_number
   - pre_discount_price
@@ -1214,7 +1621,6 @@ _col_jobs_wanted_listing: &col_jobs_wanted_listing
   - photos_count
   - location_list
   - usage
-  - seo_links
   - has_photos
   - required_commitment
   - neighbourhood
@@ -1239,9 +1645,9 @@ _col_jobs_wanted_listing: &col_jobs_wanted_listing
   - price
   - photo_mains
   - objectID
+  - description_full
 
 _col_jobs_listing: &col_jobs_listing
-  - seo_links
   - has_any_verification
   - tags
   - site
@@ -1272,7 +1678,6 @@ _col_jobs_listing: &col_jobs_listing
   - language
   - can_chat
   - user_id
-  - vas
   - details_v2
   - places
   - condition
@@ -1287,7 +1692,6 @@ _col_jobs_listing: &col_jobs_listing
   - discount_percentage
   - max_quantity
   - uuid
-  - photo
   - photos_approved
   - category_v2
   - description
@@ -1306,6 +1710,7 @@ _col_jobs_listing: &col_jobs_listing
   - has_phone_number
   - highlighted_ad
   - objectID
+  - description_full
 
 # ── PER-SCRAPER SCHEMAS ──────────────────────────────────────
 excel_schema:
@@ -1400,13 +1805,13 @@ excel_schema:
         required_columns: *col_sale_land
         row_count_range: [1, 600]
     min_file_size_kb: 5
-  
+
   # ── BATCH Sale Property2 ─────────────────────────────────────────────────
   - scraper: sale_residential (property)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
-        required_columns: *
+        required_columns: *col_sale_residential
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1414,7 +1819,7 @@ excel_schema:
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
-        required_columns: *
+        required_columns: *col_sale_multiple_units
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1422,7 +1827,7 @@ excel_schema:
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
-        required_columns: *
+        required_columns: *col_sale_residential
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1432,7 +1837,7 @@ excel_schema:
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
-        required_columns: *
+        required_columns: *col_rent_residential
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1440,7 +1845,7 @@ excel_schema:
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
-        required_columns: *
+        required_columns: *col_rent_rooms_rent_flatmates
         row_count_range: [1, 600]
     min_file_size_kb: 5
   
@@ -1457,7 +1862,7 @@ excel_schema:
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
-        required_columns: *
+        required_columns: *_col_rent_holiday_homes
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
