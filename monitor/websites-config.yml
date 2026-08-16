@@ -1862,7 +1862,7 @@ excel_schema:
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
-        required_columns: *_col_rent_holiday_homes
+        required_columns: *col_rent_holiday_homes
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
