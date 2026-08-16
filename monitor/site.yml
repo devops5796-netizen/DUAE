@@ -16,7 +16,7 @@ repo5: DDuae
 run_place: github
 uses_proxy: false
 r2_prefix: DUAE
-scrapers: 18
+scrapers: 56
 schedule: daily
 data_format: xlsx
 workflows:
