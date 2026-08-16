@@ -1,0 +1,29 @@
+folder: DUAE
+site_id: dubizzle-UAE
+display_name: Dubizzle United Arab Emirates
+website: uae.dubizzle.com/
+country: United Arab Emirates
+github_username1: devops5796-netizen
+github_username2: Dev545989
+github_username3: work59
+github_username4: wwo825
+github_username5: hr874878
+repo1: DUAE
+repo2: D
+repo3: duae
+repo4: UAED
+repo5: DDuae
+run_place: github
+uses_proxy: false
+r2_prefix: DUAE
+scrapers: 60
+schedule: daily
+data_format: xlsx
+workflows:
+  - "Motors"
+  - "Rent Property"
+  - "Jobs"
+  - "Classifieds & Community"
+  - "Sale Property"
+  - "Sale Property2"
+  - "Rent Property2"
