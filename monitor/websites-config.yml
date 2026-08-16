@@ -394,18 +394,23 @@ pipeline_chain:
 
 # ── REUSABLE COLUMN ANCHORS ─────────────────────────────────
 
-_col_boats_and_auto_accessories_parts_listing: &col_boats_and_auto_accessories_parts_listing
+_col_auto_accessories_parts_listing: &col_auto_accessories_parts_listing
+  - _distinctSeqID
+  - _geoloc
+  - condition
+  - kilometers
+  - seller_type
+  - usage
+  - year
   - absolute_url
   - added
-  - age
-  - available_quantity
   - business
   - can_chat
   - category_id
   - category_v2
-  - condition
   - content_type
   - created_at
+  - description_full
   - details
   - details_v2
   - discount_percentage
@@ -413,60 +418,91 @@ _col_boats_and_auto_accessories_parts_listing: &col_boats_and_auto_accessories_p
   - has_phone_number
   - has_photos
   - has_sms_number
-  - has_variants
   - has_whatsapp_number
   - highlighted_ad
   - id
-  - is_ecommerce_listing
   - is_premium
-  - is_spotlight_ad
   - is_super_ad
   - is_verified_business
   - is_verified_user
   - language
-  - listing_group_id
   - location_list
   - lookup_attributes
-  - max_quantity
-  - multi_site
   - name
   - neighbourhood
   - objectID
-  - photo_mains
-  - photos_approved
+  - photo_thumbnails
   - photos_count
   - places
   - pre_discount_price
   - price
-  - price_type
-  - seller_account_type
   - site
-  - stock_level
   - tags
   - uri
-  - usage
   - user
   - user_id
   - uuid
+
+_col_boats_listing: &col_boats_listing
   - _distinctSeqID
-  - _geoloc 
+  - _geoloc
+  - age
+  - condition
   - kilometers
   - seller_type
+  - usage
   - year
+  - absolute_url
+  - added
+  - business
+  - can_chat
+  - category_id
+  - category_v2
+  - content_type
+  - created_at
   - description_full
+  - details
+  - details_v2
+  - discount_percentage
+  - has_any_verification
+  - has_phone_number
+  - has_photos
+  - has_sms_number
+  - has_whatsapp_number
+  - highlighted_ad
+  - id
+  - is_premium
+  - is_super_ad
+  - is_verified_business
+  - is_verified_user
+  - language
+  - location_list
+  - lookup_attributes
+  - name
+  - neighbourhood
+  - objectID
+  - photo_thumbnails
+  - photos_count
+  - places
+  - pre_discount_price
+  - price
+  - site
+  - tags
+  - uri
+  - user
+  - user_id
+  - uuid
 
 _col_sale_cars_listing: &col_sale_cars_listing
   - absolute_url
   - added
-  - age
-  - available_quantity
   - business
   - can_chat
   - category_id
   - category_v2
-  - condition
   - content_type
   - created_at
+  - description_full
   - details
   - details_v2
   - discount_percentage
@@ -474,38 +510,27 @@ _col_sale_cars_listing: &col_sale_cars_listing
   - has_phone_number
   - has_photos
   - has_sms_number
-  - has_variants
   - has_whatsapp_number
   - highlighted_ad
   - id
-  - is_ecommerce_listing
   - is_premium
-  - is_spotlight_ad
   - is_super_ad
   - is_verified_business
   - is_verified_user
   - language
-  - listing_group_id
   - location_list
   - lookup_attributes
-  - max_quantity
-  - multi_site
   - name
   - neighbourhood
   - objectID
-  - photo_mains
-  - photos_approved
+  - photo_thumbnails
   - photos_count
   - places
   - pre_discount_price
   - price
-  - price_type
-  - seller_account_type
   - site
-  - stock_level
   - tags
   - uri
-  - usage
   - user
   - user_id
   - uuid
@@ -513,38 +538,31 @@ _col_sale_cars_listing: &col_sale_cars_listing
   - agent_logo
   - auto_agent_id
   - car_condition
-  - cotd_on
   - has_video_url
   - has_view360
-  - has_vin
-  - inventory_type
   - is_coming_soon
-  - is_cotd_booked
   - is_cotw_booked
   - is_export_car
   - is_featured_agent
-  - is_inspected
   - is_reserved
   - kilometers
   - motors_trim
   - motors_variant
+  - price_type
   - seller_type
   - video_url
   - year
-  - description_full
 
 _col_rental_cars_listing: &col_renal_cars_listing
   - absolute_url
   - added
-  - age
-  - available_quantity
   - business
   - can_chat
   - category_id
   - category_v2
-  - condition
   - content_type
   - created_at
+  - description_full
   - details
   - details_v2
   - discount_percentage
@@ -552,38 +570,27 @@ _col_rental_cars_listing: &col_renal_cars_listing
   - has_phone_number
   - has_photos
   - has_sms_number
-  - has_variants
   - has_whatsapp_number
   - highlighted_ad
   - id
-  - is_ecommerce_listing
   - is_premium
-  - is_spotlight_ad
   - is_super_ad
   - is_verified_business
   - is_verified_user
   - language
-  - listing_group_id
   - location_list
   - lookup_attributes
-  - max_quantity
-  - multi_site
   - name
   - neighbourhood
   - objectID
-  - photo_mains
-  - photos_approved
+  - photo_thumbnails
   - photos_count
   - places
   - pre_discount_price
   - price
-  - price_type
-  - seller_account_type
   - site
-  - stock_level
   - tags
   - uri
-  - usage
   - user
   - user_id
   - uuid
@@ -602,20 +609,17 @@ _col_rental_cars_listing: &col_renal_cars_listing
   - seller_type
   - weekly_rental_price
   - year
-  - description_full
 
 _col_number_plates_listing: &col_number_plates_listing
   - absolute_url
   - added
-  - age
-  - available_quantity
   - business
   - can_chat
   - category_id
   - category_v2
-  - condition
   - content_type
   - created_at
+  - description_full
   - details
   - details_v2
   - discount_percentage
@@ -623,58 +627,45 @@ _col_number_plates_listing: &col_number_plates_listing
   - has_phone_number
   - has_photos
   - has_sms_number
-  - has_variants
   - has_whatsapp_number
   - highlighted_ad
   - id
-  - is_ecommerce_listing
   - is_premium
-  - is_spotlight_ad
   - is_super_ad
   - is_verified_business
   - is_verified_user
   - language
-  - listing_group_id
   - location_list
   - lookup_attributes
-  - max_quantity
-  - multi_site
   - name
   - neighbourhood
   - objectID
-  - photo_mains
-  - photos_approved
+  - photo_thumbnails
   - photos_count
   - places
   - pre_discount_price
   - price
-  - price_type
-  - seller_account_type
   - site
-  - stock_level
   - tags
   - uri
-  - usage
   - user
   - user_id
   - uuid
   - _distinctSeqID
   - plate_code
   - plate_number_length
-  - description_full
+  - seller_account_type
 
 _col_motorcycles_listing: &col_motorcycles_listing
   - absolute_url
   - added
-  - age
-  - available_quantity
   - business
   - can_chat
   - category_id
   - category_v2
-  - condition
   - content_type
   - created_at
+  - description_full
   - details
   - details_v2
   - discount_percentage
@@ -682,38 +673,27 @@ _col_motorcycles_listing: &col_motorcycles_listing
   - has_phone_number
   - has_photos
   - has_sms_number
-  - has_variants
   - has_whatsapp_number
   - highlighted_ad
   - id
-  - is_ecommerce_listing
   - is_premium
-  - is_spotlight_ad
   - is_super_ad
   - is_verified_business
   - is_verified_user
   - language
-  - listing_group_id
   - location_list
   - lookup_attributes
-  - max_quantity
-  - multi_site
   - name
   - neighbourhood
   - objectID
-  - photo_mains
-  - photos_approved
+  - photo_thumbnails
   - photos_count
   - places
   - pre_discount_price
   - price
-  - price_type
-  - seller_account_type
   - site
-  - stock_level
   - tags
   - uri
-  - usage
   - user
   - user_id
   - uuid
@@ -722,22 +702,30 @@ _col_motorcycles_listing: &col_motorcycles_listing
   - final_drive_system
   - kilometers
   - seller_type
+  - usage
   - wheels
   - year
-  - description_full
  
 _col_heavy_vehicles_listing: &col_heavy_vehicles_listing
+  - _distinctSeqID
+  - _geoloc
+  - agent_logo
+  - auto_agent_id
+  - is_coming_soon
+  - is_cotw_booked
+  - is_reserved
+  - kilometers
+  - seller_type
+  - year
   - absolute_url
   - added
-  - age
-  - available_quantity
   - business
   - can_chat
   - category_id
   - category_v2
-  - condition
   - content_type
   - created_at
+  - description_full
   - details
   - details_v2
   - discount_percentage
@@ -745,54 +733,30 @@ _col_heavy_vehicles_listing: &col_heavy_vehicles_listing
   - has_phone_number
   - has_photos
   - has_sms_number
-  - has_variants
   - has_whatsapp_number
   - highlighted_ad
   - id
-  - is_ecommerce_listing
   - is_premium
-  - is_spotlight_ad
   - is_super_ad
   - is_verified_business
   - is_verified_user
   - language
-  - listing_group_id
   - location_list
   - lookup_attributes
-  - max_quantity
-  - multi_site
   - name
   - neighbourhood
   - objectID
-  - photo_mains
-  - photos_approved
+  - photo_thumbnails
   - photos_count
   - places
   - pre_discount_price
   - price
-  - price_type
-  - seller_account_type
   - site
-  - stock_level
   - tags
   - uri
-  - usage
   - user
   - user_id
   - uuid
-  - _distinctSeqID
-  - agent_logo
-  - auto_agent_id
-  - cotd_on
-  - has_vin
-  - is_coming_soon
-  - is_cotd_booked
-  - is_cotw_booked
-  - is_reserved
-  - kilometers
-  - seller_type
-  - year
-  - description_full
 
 _col_rent_residential: &col_rent_residential
   - active
@@ -1554,7 +1518,7 @@ _col_classifieds_community_listing: &col_classifieds_community_listing
   - name
   - neighbourhood
   - objectID
-  - photo_mains
+  - photo_thumbnails
   - photos_count
   - places
   - pre_discount_price
@@ -1761,7 +1725,7 @@ excel_schema:
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
-        required_columns: *col_boats_and_auto_accessories_parts_listing
+        required_columns: *col_auto_accessories_parts_listing
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1777,7 +1741,7 @@ excel_schema:
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
-        required_columns: *col_boats_and_auto_accessories_parts_listing
+        required_columns: *col_boats_listing
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
