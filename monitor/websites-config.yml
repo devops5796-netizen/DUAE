@@ -1019,7 +1019,7 @@ _col_rent_commercial: &col_rent_commercial
   - objectID
   - description_full
 
-_col_rent_holiday_homes: &rent_holiday_homes
+_col_rent_holiday_homes: &col_rent_holiday_homes
   - trucheck_verified_at
   - amenities_v2
   - video_url
