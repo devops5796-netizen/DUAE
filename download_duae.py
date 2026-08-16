@@ -18,7 +18,7 @@ s3 = boto3.client(
     aws_secret_access_key=CF_R2_SECRET_KEY,
     region_name="auto",
 )
-r2_prefix = "DUAE/year=2026/month=08/day=16"
+r2_prefix = "DUAE"
 
 LOCAL_ROOT = f"{r2_prefix}_1"
 
@@ -28,8 +28,7 @@ YEAR = today.strftime("%Y")
 MONTH = today.strftime("%m")
 DAY = today.strftime("%d")
 PREFIXES = [
-    f"{r2_prefix}/year={YEAR}/month={MONTH}/day={DAY}/",
-    f"{r2_prefix}/monitor/",
+    f"{r2_prefix}/year=2026/month=08/day=16/",
 ]
 
 MONITOR_STATUS_FILE = f"{r2_prefix}/monitor/monitor_stats.yml"
@@ -113,21 +112,21 @@ def main():
                 print(f"❌ {key}")
                 print(e)
 
-    # Download monitor_status.yml
-    try:
-        download_monitor_stats()
-        downloaded += 1
-    except Exception as e:
-        print(f"❌ {MONITOR_STATUS_FILE}")
-        print(e)
+    # # Download monitor_status.yml
+    # try:
+    #     download_monitor_stats()
+    #     downloaded += 1
+    # except Exception as e:
+    #     print(f"❌ {MONITOR_STATUS_FILE}")
+    #     print(e)
 
-    # Download websites-config.yml
-        try:
-            download_monitor_config()
-            downloaded += 1
-        except Exception as e:
-            print(f"❌ {MONITOR_CONFIG_FILE}")
-            print(e)
+    # # Download websites-config.yml
+    #     try:
+    #         download_monitor_config()
+    #         downloaded += 1
+    #     except Exception as e:
+    #         print(f"❌ {MONITOR_CONFIG_FILE}")
+    #         print(e)
 
 
     print("\n==============================")
