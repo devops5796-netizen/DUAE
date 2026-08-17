@@ -249,7 +249,7 @@ def download_images(images: list, slug: str = "", category: str = "", id_prod: s
     file_prefix = id_prod if id_prod else slug
     today = datetime.now(timezone.utc)
 
-    category_display = f"{cat0}/{cat1}" if cat0 and cat1 else (cat1 or cat0)
+    category_display = f"{cat0.lower()}/{cat1.replace('_', '-')}" if cat0 and cat1 else (cat1 or cat0)
 
     for idx, img_url in enumerate(images, start=1):
         filename = f"{file_prefix}-{idx}.{ext}"
@@ -695,7 +695,7 @@ def _process_dataframe(df: pd.DataFrame, category_name: str, output_base_dir: st
                 json_files.append(json_path)
 
         dt = datetime.now(timezone.utc)
-        category_path = f"{safe_cat0}/{category_name.replace('_', '-')}"
+        category_path = f"{cat0.lower()}/{category_name.replace('_', '-')}"
         summary = build_group_summary(sheets, group_df, safe_cat0, safe_cat1, dt, output_base_dir, category_path)
         summary_file_path = os.path.join(summary_dir, "summary.json")
         with open(summary_file_path, "w", encoding="utf-8") as f:

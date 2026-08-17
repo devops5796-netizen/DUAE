@@ -277,7 +277,8 @@ jobs:
               parts = relative_path.split(os.sep)
               # parts = [cat0, cat1, excel, filename.xlsx]
               filename = parts[-1]
-              r2_key = f"DUAE/{date_prefix}/{category_path}/excel/{filename}"
+              file_category_path = f"{parts[0].lower()}/{parts[1].replace('_', '-')}"
+              r2_key = f"DUAE/{date_prefix}/{file_category_path}/excel/{filename}"
 
               client.upload_file(local_path, bucket, r2_key,
                   ExtraArgs={'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
@@ -288,7 +289,8 @@ jobs:
               relative_path = os.path.relpath(local_path, output_base)
               parts = relative_path.split(os.sep)
               filename = parts[-1]
-              r2_key = f"DUAE/{date_prefix}/{category_path}/json/{filename}"
+              file_category_path = f"{parts[0].lower()}/{parts[1].replace('_', '-')}"
+              r2_key = f"DUAE/{date_prefix}/{file_category_path}/json/{filename}"
 
               client.upload_file(local_path, bucket, r2_key,
                   ExtraArgs={'ContentType': 'application/json; charset=utf-8'})

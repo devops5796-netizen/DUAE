@@ -113,7 +113,7 @@ scrapers:
     url: https://uae.dubizzle.com/en/property-for-rent/rooms-for-rent-flatmates/
     batch: "Rent Property"
     workflow_file: rent_property.yml
-    r2_path: "{r2_bucket}/DUAE/property/property-for-rent/rooms_rent_flatmates"
+    r2_path: "{r2_bucket}/DUAE/property/property-for-rent/rooms-for-rent-flatmates"
 
   - name: rent_commercial (property)
     url: https://uae.dubizzle.com/en/property-for-rent/commercial/
@@ -125,13 +125,13 @@ scrapers:
     url: https://uae.dubizzle.com/en/property-for-rent/holiday-homes/
     batch: "Rent Property2"
     workflow_file: rent_property2.yml
-    r2_path: "{r2_bucket}/DUAE/property/property-for-rent/holiday_homes"
+    r2_path: "{r2_bucket}/DUAE/property/property-for-rent/holiday-homes"
 
   - name: rent_short_term_monthly (property)
     url: https://dubai.dubizzle.com/en/property-for-rent/short-term/
     batch: "Rent Property2"
     workflow_file: rent_property2.yml
-    r2_path: "{r2_bucket}/DUAE/property/property-for-rent/short_term"
+    r2_path: "{r2_bucket}/DUAE/property/property-for-rent/short-term"
 
   - name: rent_short_term_daily (property)
     url: https://dubai.dubizzle.com/en/property-for-rent/short-term-daily/
@@ -1804,7 +1804,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_rent_residential
-        row_count_range: [1, 600]
+        row_count_range: [1, 3000]
     min_file_size_kb: 5
 
   - scraper: rent_rooms_rent_flatmates (property)
