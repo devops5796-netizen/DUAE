@@ -19,59 +19,59 @@ meta:
 # SCRAPERS — 11 categories across 1 batche
 # ------------------------------------------------------------
 scrapers:
-  - name: used_cars (motors)
-    url: https://uae.dubizzle.com/motors/used-cars/
+  - name: used_cars (Motors)
+    url: https://uae.dubizzle.com/Motors/used-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/motors/used-cars"
+    r2_path: "{r2_bucket}/DUAE/Motors/used-cars"
 
-  - name: new_cars (motors)
-    url: https://uae.dubizzle.com/motors/new-cars/
+  - name: new_cars (Motors)
+    url: https://uae.dubizzle.com/Motors/new-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/motors/new-cars"
+    r2_path: "{r2_bucket}/DUAE/Motors/new-cars"
 
-  - name: export_cars (motors)
-    url: https://uae.dubizzle.com/motors/export-cars/
+  - name: export_cars (Motors)
+    url: https://uae.dubizzle.com/Motors/export-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/motors/export-cars"
+    r2_path: "{r2_bucket}/DUAE/Motors/export-cars"
 
-  - name: rental_cars (motors)
-    url: https://uae.dubizzle.com/motors/rental-cars/
+  - name: rental_cars (Motors)
+    url: https://uae.dubizzle.com/Motors/rental-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/motors/rental-cars"
+    r2_path: "{r2_bucket}/DUAE/Motors/rental-cars"
 
-  - name: motorcycles (motors)
-    url: https://uae.dubizzle.com/motors/motorcycles/
+  - name: motorcycles (Motors)
+    url: https://uae.dubizzle.com/Motors/motorcycles/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/motors/motorcycles"
+    r2_path: "{r2_bucket}/DUAE/Motors/motorcycles"
 
-  - name: auto_accessories_parts (motors)
-    url: https://uae.dubizzle.com/motors/auto-accessories-parts/
+  - name: auto_accessories_parts (Motors)
+    url: https://uae.dubizzle.com/Motors/auto-accessories-parts/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/motors/auto-accessories-parts"
+    r2_path: "{r2_bucket}/DUAE/Motors/auto-accessories-parts"
 
-  - name: heavy_vehicles (motors)
-    url: https://uae.dubizzle.com/motors/heavy-vehicles/
+  - name: heavy_vehicles (Motors)
+    url: https://uae.dubizzle.com/Motors/heavy-vehicles/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/motors/heavy-vehicles"
+    r2_path: "{r2_bucket}/DUAE/Motors/heavy-vehicles"
 
-  - name: boats (motors)
-    url: https://uae.dubizzle.com/motors/boats/
+  - name: boats (Motors)
+    url: https://uae.dubizzle.com/Motors/boats/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/motors/boats"
+    r2_path: "{r2_bucket}/DUAE/Motors/boats"
 
-  - name: number_plates (motors)
-    url: https://uae.dubizzle.com/motors/number-plates/
+  - name: number_plates (Motors)
+    url: https://uae.dubizzle.com/Motors/number-plates/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/motors/number-plates"
+    r2_path: "{r2_bucket}/DUAE/Motors/number-plates"
 
   - name: sale_residential (property)
     url: https://uae.dubizzle.com/en/property-for-sale/residential/
@@ -759,79 +759,78 @@ _col_heavy_vehicles_listing: &col_heavy_vehicles_listing
   - uuid
 
 _col_rent_residential: &col_rent_residential
-  - active
-  - agent
-  - amenities_v2
-  - size
-  - payment_frequency
-  - description_short
-  - trucheck_verified_at
+  - has_tour_url
   - listed_by
-  - seo_links
-  - photos_count
-  - price
-  - photos
-  - is_verified_user
-  - name
-  - bathrooms
-  - language
-  - building
-  - uuid
   - is_price_hidden
-  - neighborhoods
-  - map_geo
-  - highlighted_ad
-  - places
+  - description_short
+  - ranking_v2
+  - language
   - agency_fees
+  - category_id
   - location_path
-  - feed_id
-  - category_v2
-  - added
+  - photos_count
+  - photos
+  - promoted
+  - uri
+  - is_verified
   - completion_status
+  - plot_area
+  - site
+  - payment_frequency
+  - landmarks
+  - is_developer_listing
+  - has_video_url
+  - trucheck_verified_at
+  - uuid
+  - map_geo
+  - can_chat
+  - ranking
+  - is_dkf827492
+  - feed_id
+  - allowed_pages
+  - neighborhoods
+  - agent
+  - id
+  - bathrooms
+  - added
   - has_sms_number
   - verification_state
-  - uri
-  - bedrooms
-  - category_id
-  - agency_tier
-  - is_developer_listing
-  - id
-  - can_chat
-  - agent_profile
-  - _geoloc
-  - is_premium_ad
-  - area_prime_slot_id
-  - city
-  - furnished
-  - has_whatsapp_number
-  - video_url
-  - ranking
-  - external_id
-  - description
-  - tour_360
-  - property_reference
-  - allowed_pages
-  - ranking_v2
-  - absolute_url
-  - has_tour_url
-  - landmarks
-  - site
-  - is_verified_business
-  - has_video_url
-  - has_dld_history
-  - plot_area
-  - promoted
-  - user_id
-  - lookup_attributes
-  - is_premium
-  - tour_url
-  - property_info
   - featured_listing
+  - user_id
+  - category_v2
+  - size
+  - agent_profile
+  - price
+  - tour_360
+  - furnished
+  - agency_tier
+  - property_reference
   - chat_enabled
-  - is_verified
-  - is_dkf827492
+  - city
+  - description
+  - building
+  - property_info
+  - has_whatsapp_number
+  - active
+  - lookup_attributes
+  - external_id
+  - video_url
+  - is_verified_user
+  - places
+  - tour_url
+  - is_premium
+  - absolute_url
+  - area_prime_slot_id
+  - name
+  - is_premium_ad
+  - highlighted_ad
+  - bedrooms
+  - _geoloc
+  - is_verified_business
+  - seo_links
+  - amenities_v2
+  - has_dld_history
   - objectID
-  - amenities
   - description_full
 
 _col_rent_rooms_rent_flatmates: &col_rent_rooms_rent_flatmates
@@ -1538,141 +1537,144 @@ _col_classifieds_community_listing: &col_classifieds_community_listing
   - user_id
   - uuid
   - description_full
-  
+
 _col_jobs_wanted_listing: &col_jobs_wanted_listing
-  - photos
-  - age
-  - has_any_verification
-  - has_phone_number
-  - pre_discount_price
-  - uuid
-  - promoted
-  - max_quantity
-  - _geoloc
-  - is_super_ad
-  - details
   - is_ecommerce_listing
-  - is_scraped
-  - jobs_logo
-  - id
-  - score
-  - details_v2
-  - photo_thumbnails
-  - listing_group_id
-  - multi_site
-  - condition
-  - summary
-  - available_quantity
-  - required_work_experience
-  - last_updated_at
   - discount_percentage
-  - added
-  - site
-  - is_spotlight_ad
-  - language
-  - created_at
-  - required_education_level
-  - location_path
-  - vas
-  - absolute_url
-  - name
-  - photos_approved
-  - has_whatsapp_number
-  - has_variants
-  - skill_level
-  - is_verified_user
-  - category_v2
-  - photos_count
-  - location_list
-  - usage
-  - has_photos
-  - required_commitment
-  - neighbourhood
-  - salary
-  - content_type
-  - tags
-  - uri
-  - places
-  - highlighted_ad
   - user
-  - user_id
-  - is_premium
-  - price_type
-  - source_url
+  - photos_count
+  - last_updated_at
   - can_chat
-  - is_verified_business
-  - tag_slugs_v2
-  - stock_level
-  - seller_account_type
+  - age
+  - _geoloc
+  - promoted
+  - has_any_verification
+  - has_variants
+  - details_v2
   - business
+  - stock_level
+  - created_at
+  - seller_account_type
+  - seo_links
   - category_id
-  - price
+  - content_type
+  - user_id
+  - absolute_url
+  - tag_slugs_v2
+  - location_path
+  - multi_site
+  - location_list
+  - has_phone_number
+  - site
+  - vas
+  - pre_discount_price
+  - uri
+  - max_quantity
+  - name
+  - id
   - photo_mains
+  - added
+  - price
+  - available_quantity
+  - cv_search_url
+  - has_photos
+  - tags
+  - is_premium
+  - is_spotlight_ad
+  - description
+  - is_super_ad
+  - is_verified_user
+  - usage
+  - condition
+  - photos_approved
+  - listing_group_id
+  - has_whatsapp_number
+  - neighbourhood
+  - photo_thumbnails
+  - photos
+  - highlighted_ad
+  - category_v2
+  - score
+  - uuid
+  - is_verified_business
+  - places
+  - summary
+  - details
+  - price_type
+  - language
   - objectID
   - description_full
 
 _col_jobs_listing: &col_jobs_listing
-  - has_any_verification
-  - tags
-  - site
   - location_list
-  - has_whatsapp_number
-  - age
-  - uri
-  - is_premium
-  - price_type
-  - is_verified_user
-  - price
-  - last_updated_at
-  - score
-  - content_type
-  - photo_thumbnails
-  - has_photos
-  - business
-  - stock_level
-  - absolute_url
-  - photos
-  - tag_slugs_v2
-  - summary
-  - added
-  - listing_group_id
-  - neighbourhood
-  - has_variants
+  - name
+  - tags
   - is_ecommerce_listing
-  - language
-  - can_chat
-  - user_id
-  - details_v2
-  - places
+  - photo_thumbnails
+  - stock_level
+  - skill_level
+  - is_verified_business
+  - details
+  - usage
+  - required_work_experience
+  - required_education_level
+  - age
+  - pre_discount_price
+  - is_scraped
+  - is_premium
   - condition
+  - id
+  - user
+  - uuid
+  - is_spotlight_ad
+  - price
+  - category_v2
+  - site
+  - places
+  - listing_group_id
+  - summary
+  - photos_approved
+  - discount_percentage
+  - neighbourhood
+  - vas
+  - _geoloc
+  - promoted
+  - salary
+  - last_updated_at
+  - jobs_logo
   - multi_site
   - location_path
-  - is_super_ad
-  - promoted
-  - name
-  - _geoloc
-  - is_verified_business
-  - user
-  - discount_percentage
-  - max_quantity
-  - uuid
-  - photos_approved
-  - category_v2
-  - description
-  - photo_mains
-  - seller_account_type
-  - cv_search_url
-  - id
-  - pre_discount_price
-  - is_spotlight_ad
-  - usage
-  - created_at
-  - available_quantity
-  - details
-  - photos_count
-  - category_id
+  - price_type
   - has_phone_number
+  - available_quantity
+  - user_id
+  - is_verified_user
+  - seo_links
+  - category_id
+  - score
+  - business
+  - is_super_ad
+  - has_any_verification
+  - has_photos
+  - required_commitment
+  - can_chat
+  - has_whatsapp_number
+  - language
+  - photos
   - highlighted_ad
+  - max_quantity
+  - seller_account_type
+  - details_v2
+  - photos_count
+  - tag_slugs_v2
+  - added
+  - uri
+  - absolute_url
+  - source_url
+  - photo_mains
+  - created_at
+  - content_type
+  - has_variants
   - objectID
   - description_full
 
@@ -1681,7 +1683,7 @@ excel_schema:
 
   # ── BATCH Motors ─────────────────────────────────────────────────
 
-  - scraper: used_cars (motors)
+  - scraper: used_cars (Motors)
     excel_file_pattern: "{brand_name}.xlsx"
     sheets:
       - name: "{car_type}"
@@ -1689,7 +1691,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: new_cars (motors)
+  - scraper: new_cars (Motors)
     excel_file_pattern: "{brand_name}.xlsx"
     sheets:
       - name: "{car_type}"
@@ -1697,7 +1699,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: export_cars (motors)
+  - scraper: export_cars (Motors)
     excel_file_pattern: "{brand_name}.xlsx"
     sheets:
       - name: "{car_type}"
@@ -1705,7 +1707,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: rental_cars (motors)
+  - scraper: rental_cars (Motors)
     excel_file_pattern: "{brand_name}.xlsx"
     sheets:
       - name: "{car_type}"
@@ -1713,7 +1715,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: motorcycles (motors)
+  - scraper: motorcycles (Motors)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1721,7 +1723,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: auto_accessories_parts (motors)
+  - scraper: auto_accessories_parts (Motors)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1729,7 +1731,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: heavy_vehicles (motors)
+  - scraper: heavy_vehicles (Motors)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1737,7 +1739,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: boats (motors)
+  - scraper: boats (Motors)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1745,7 +1747,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: number_plates (motors)
+  - scraper: number_plates (Motors)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -2162,15 +2164,15 @@ alert_thresholds:
   # Per-scraper observed file-size floors (KB) from real stats × 50%, floored at schema min
   # Used as a fast check even before trend history exists
   observed_min_file_size_kb:
-    used_cars (motors): 5
-    new_cars (motors): 5
-    export_cars (motors): 5
-    rental_cars (motors): 5
-    motorcycles (motors): 5
-    auto_accessories_parts (motors): 5
-    heavy_vehicles (motors): 5
-    boats (motors): 5
-    number_plates (motors): 5
+    used_cars (Motors): 5
+    new_cars (Motors): 5
+    export_cars (Motors): 5
+    rental_cars (Motors): 5
+    motorcycles (Motors): 5
+    auto_accessories_parts (Motors): 5
+    heavy_vehicles (Motors): 5
+    boats (Motors): 5
+    number_plates (Motors): 5
     sale_commercial (property): 5
     sale_land (property): 5
     sale_residential (property): 5
