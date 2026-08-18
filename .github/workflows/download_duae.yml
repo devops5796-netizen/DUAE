@@ -33,5 +33,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: DUAE_download_${{ github.run_id }}
-          path: DUAE_1/
+          path: DUAE/
           retention-days: 7

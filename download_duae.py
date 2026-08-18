@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 
 import boto3
 from dotenv import load_dotenv
@@ -18,22 +17,24 @@ s3 = boto3.client(
     aws_secret_access_key=CF_R2_SECRET_KEY,
     region_name="auto",
 )
-r2_prefix = "DUAE"
 
-LOCAL_ROOT = f"{r2_prefix}_1"
+# ============================================================
+# CONFIG
+# ============================================================
 
-today = datetime.utcnow()
+r2_prefix = "DOMAN"
 
-YEAR = today.strftime("%Y")
-MONTH = today.strftime("%m")
-DAY = today.strftime("%d")
+# Everything under DUAE will be downloaded
+LOCAL_ROOT = f"{r2_prefix}"
+
 PREFIXES = [
-    f"{r2_prefix}/year=2026/month=08/day=16/",
+    f"{r2_prefix}/",
 ]
 
-MONITOR_STATUS_FILE = f"{r2_prefix}/monitor/monitor_stats.yml"
-MONITOR_CONFIG_FILE = f"{r2_prefix}/monitor/websites-config.yml"
 
+# ============================================================
+# LIST OBJECTS
+# ============================================================
 
 def list_all_objects(prefix):
     paginator = s3.get_paginator("list_objects_v2")
@@ -46,12 +47,37 @@ def list_all_objects(prefix):
             yield obj["Key"]
 
 
+# ============================================================
+# CHECK IF IMAGE
+# ============================================================
+
+def is_image_path(key):
+    """
+    Skip anything inside an 'images' folder.
+    Examples:
+        DUAE/year=2026/month=08/day=16/images/...
+        DUAE/year=2026/month=08/day=17/property/images/...
+    """
+
+    parts = key.split("/")
+
+    return "images" in parts
+
+
+# ============================================================
+# DOWNLOAD FILE
+# ============================================================
+
 def download_file(key):
-    if "/images/" in key:
+    if is_image_path(key):
         return False
 
     local_path = os.path.join(LOCAL_ROOT, key)
-    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+
+    os.makedirs(
+        os.path.dirname(local_path),
+        exist_ok=True,
+    )
 
     print(f"⬇ {key}")
 
@@ -64,72 +90,43 @@ def download_file(key):
     return True
 
 
-def download_monitor_stats():
-    local_path = os.path.join(LOCAL_ROOT, MONITOR_STATUS_FILE)
-    os.makedirs(os.path.dirname(local_path), exist_ok=True)
-
-    print(f"⬇ {MONITOR_STATUS_FILE}")
-
-    s3.download_file(
-        BUCKET_NAME,
-        MONITOR_STATUS_FILE,
-        local_path,
-    )
-
-def download_monitor_config():
-    local_path = os.path.join(LOCAL_ROOT, MONITOR_CONFIG_FILE)
-    os.makedirs(os.path.dirname(local_path), exist_ok=True)
-
-    print(f"⬇ {MONITOR_CONFIG_FILE}")
-
-    s3.download_file(
-        BUCKET_NAME,
-        MONITOR_CONFIG_FILE,
-        local_path,
-    )
-
+# ============================================================
+# MAIN
+# ============================================================
 
 def main():
     downloaded = 0
     skipped = 0
 
     for prefix in PREFIXES:
-        print(f"\nSearching under: {prefix}")
+
+        print("\n==============================")
+        print(f"Searching under: {prefix}")
+        print("==============================")
 
         for key in list_all_objects(prefix):
 
+            # Skip folder placeholders
             if key.endswith("/"):
                 continue
 
-            if "/images/" in key:
+            # Skip images
+            if is_image_path(key):
                 skipped += 1
+                print(f"⏭ Skipping image: {key}")
                 continue
 
             try:
                 if download_file(key):
                     downloaded += 1
+
             except Exception as e:
-                print(f"❌ {key}")
+                print(f"❌ Failed: {key}")
                 print(e)
 
-    # # Download monitor_status.yml
-    # try:
-    #     download_monitor_stats()
-    #     downloaded += 1
-    # except Exception as e:
-    #     print(f"❌ {MONITOR_STATUS_FILE}")
-    #     print(e)
-
-    # # Download websites-config.yml
-    #     try:
-    #         download_monitor_config()
-    #         downloaded += 1
-    #     except Exception as e:
-    #         print(f"❌ {MONITOR_CONFIG_FILE}")
-    #         print(e)
-
-
     print("\n==============================")
+    print("DOWNLOAD SUMMARY")
+    print("==============================")
     print(f"Downloaded : {downloaded}")
     print(f"Skipped    : {skipped} (images)")
     print("==============================")
