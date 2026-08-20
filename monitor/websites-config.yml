@@ -907,7 +907,6 @@ _col_rent_rooms_rent_flatmates: &col_rent_rooms_rent_flatmates
   - site
   - seo_links
   - objectID
-  - amenities
 
 _col_rent_commercial: &col_rent_commercial
   - id
@@ -1679,7 +1678,7 @@ excel_schema:
     sheets:
       - name: "{car_type}"
         required_columns: *col_sale_cars_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: new_cars (motors)
@@ -1687,7 +1686,7 @@ excel_schema:
     sheets:
       - name: "{car_type}"
         required_columns: *col_sale_cars_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: export_cars (motors)
@@ -1695,7 +1694,7 @@ excel_schema:
     sheets:
       - name: "{car_type}"
         required_columns: *col_sale_cars_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: rental_cars (motors)
@@ -1703,7 +1702,7 @@ excel_schema:
     sheets:
       - name: "{car_type}"
         required_columns: *col_renal_cars_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: motorcycles (motors)
@@ -1711,7 +1710,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_motorcycles_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: auto_accessories_parts (motors)
@@ -1719,7 +1718,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_auto_accessories_parts_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: heavy_vehicles (motors)
@@ -1727,7 +1726,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_heavy_vehicles_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: boats (motors)
@@ -1735,7 +1734,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_boats_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: number_plates (motors)
@@ -1743,7 +1742,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_number_plates_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
   
   # ── BATCH Sale Property ─────────────────────────────────────────────────
@@ -1754,7 +1753,7 @@ excel_schema:
         required_columns: *col_sale_commercial
         optional_columns:
           - description_full
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: sale_land (property)
@@ -1764,7 +1763,7 @@ excel_schema:
         required_columns: *col_sale_land
         optional_columns:
           - description_full
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   # ── BATCH Sale Property2 ─────────────────────────────────────────────────
@@ -1775,7 +1774,7 @@ excel_schema:
         required_columns: *col_sale_residential
         optional_columns:
           - description_full
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: sale_multiple_units (property)
@@ -1785,7 +1784,7 @@ excel_schema:
         required_columns: *col_sale_multiple_units
         optional_columns:
           - description_full
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: sale_off-plan (property)
@@ -1795,7 +1794,7 @@ excel_schema:
         required_columns: *col_sale_residential
         optional_columns:
           - description_full
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   # ── BATCH Rent Property ─────────────────────────────────────────────────
@@ -1807,7 +1806,7 @@ excel_schema:
         required_columns: *col_rent_residential
         optional_columns:
           - description_full
-        row_count_range: [1, 3000]
+        row_count_range: [1, 3500]
     min_file_size_kb: 5
 
   - scraper: rent_rooms_rent_flatmates (property)
@@ -1817,7 +1816,8 @@ excel_schema:
         required_columns: *col_rent_rooms_rent_flatmates
         optional_columns:
           - description_full
-        row_count_range: [1, 600]
+          - amenities
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
   
   # ── BATCH Rent Property2 ─────────────────────────────────────────────────
@@ -1828,7 +1828,7 @@ excel_schema:
         required_columns: *col_rent_commercial
         optional_columns:
           - description_full
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: rent_holiday_homes (property)
@@ -1838,7 +1838,7 @@ excel_schema:
         required_columns: *col_rent_holiday_homes
         optional_columns:
           - description_full
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: rent_short_term_monthly (property)
@@ -1848,7 +1848,7 @@ excel_schema:
         required_columns: *col_rent_short_term
         optional_columns:
           - description_full
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: rent_short_term_daily (property)
@@ -1858,7 +1858,7 @@ excel_schema:
         required_columns: *col_rent_short_term
         optional_columns:
           - description_full
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   # ── BATCH Classifieds_Community ─────────────────────────────────────────────────
@@ -1868,7 +1868,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: computers_networking (classified)
@@ -1876,7 +1876,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: business_industrial (classified)
@@ -1884,7 +1884,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: home_appliances (classified)
@@ -1892,7 +1892,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: sports_equipment (classified)
@@ -1900,7 +1900,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: clothing_accessories (classified)
@@ -1908,7 +1908,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: cameras_imaging (classified)
@@ -1916,7 +1916,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: jewelry_watches (classified)
@@ -1924,7 +1924,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
   
   - scraper: pets (classified)
@@ -1932,7 +1932,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: musical_instruments (classified)
@@ -1940,7 +1940,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: gaming (classified)
@@ -1948,7 +1948,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: baby_items (classified)
@@ -1956,7 +1956,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: toys (classified)
@@ -1964,7 +1964,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: tickets_vouchers (classified)
@@ -1972,7 +1972,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: collectibles (classified)
@@ -1980,7 +1980,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: books (classified)
@@ -1988,7 +1988,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: music (classified)
@@ -1996,7 +1996,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: free_stuff (classified)
@@ -2004,7 +2004,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: lostfound (classified)
@@ -2012,7 +2012,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: dvds_movies (classified)
@@ -2020,7 +2020,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: furniture_home_garden (classified)
@@ -2028,7 +2028,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: mobile_phones_pdas (classified)
@@ -2036,7 +2036,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: auto_services (community)
@@ -2044,7 +2044,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: consultancy_services (community)
@@ -2052,7 +2052,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: domestic (community)
@@ -2060,7 +2060,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: event_entertainment (community)
@@ -2068,7 +2068,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: freelancers (community)
@@ -2076,7 +2076,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: health_wellbeing_services (community)
@@ -2084,7 +2084,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: home_maintenance (community)
@@ -2092,7 +2092,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: movers_removals (community)
@@ -2100,7 +2100,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: other_services (community)
@@ -2108,7 +2108,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: restoration_repairs (community)
@@ -2116,7 +2116,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: tutors_classes (community)
@@ -2124,7 +2124,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: web_computer_services (community)
@@ -2132,7 +2132,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_classifieds_community_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
   
   # ── BATCH Jobs ─────────────────────────────────────────────────
@@ -2142,7 +2142,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_jobs_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
   - scraper: Jobs_Wanted (Jobs)
@@ -2150,7 +2150,7 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_jobs_wanted_listing
-        row_count_range: [1, 600]
+        row_count_range: [1, 1000]
     min_file_size_kb: 5
 
 # ============================================================
