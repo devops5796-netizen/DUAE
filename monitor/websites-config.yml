@@ -19,59 +19,59 @@ meta:
 # SCRAPERS — 11 categories across 1 batche
 # ------------------------------------------------------------
 scrapers:
-  - name: used_cars (Motors)
-    url: https://uae.dubizzle.com/Motors/used-cars/
+  - name: used_cars (motors)
+    url: https://uae.dubizzle.com/motors/used-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/used-cars"
+    r2_path: "{r2_bucket}/DUAE/motors/used-cars"
 
-  - name: new_cars (Motors)
-    url: https://uae.dubizzle.com/Motors/new-cars/
+  - name: new_cars (motors)
+    url: https://uae.dubizzle.com/motors/new-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/new-cars"
+    r2_path: "{r2_bucket}/DUAE/motors/new-cars"
 
-  - name: export_cars (Motors)
-    url: https://uae.dubizzle.com/Motors/export-cars/
+  - name: export_cars (motors)
+    url: https://uae.dubizzle.com/motors/export-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/export-cars"
+    r2_path: "{r2_bucket}/DUAE/motors/export-cars"
 
-  - name: rental_cars (Motors)
-    url: https://uae.dubizzle.com/Motors/rental-cars/
+  - name: rental_cars (motors)
+    url: https://uae.dubizzle.com/motors/rental-cars/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/rental-cars"
+    r2_path: "{r2_bucket}/DUAE/motors/rental-cars"
 
-  - name: motorcycles (Motors)
-    url: https://uae.dubizzle.com/Motors/motorcycles/
+  - name: motorcycles (motors)
+    url: https://uae.dubizzle.com/motors/motorcycles/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/motorcycles"
+    r2_path: "{r2_bucket}/DUAE/motors/motorcycles"
 
-  - name: auto_accessories_parts (Motors)
-    url: https://uae.dubizzle.com/Motors/auto-accessories-parts/
+  - name: auto_accessories_parts (motors)
+    url: https://uae.dubizzle.com/motors/auto-accessories-parts/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/auto-accessories-parts"
+    r2_path: "{r2_bucket}/DUAE/motors/auto-accessories-parts"
 
-  - name: heavy_vehicles (Motors)
-    url: https://uae.dubizzle.com/Motors/heavy-vehicles/
+  - name: heavy_vehicles (motors)
+    url: https://uae.dubizzle.com/motors/heavy-vehicles/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/heavy-vehicles"
+    r2_path: "{r2_bucket}/DUAE/motors/heavy-vehicles"
 
-  - name: boats (Motors)
-    url: https://uae.dubizzle.com/Motors/boats/
+  - name: boats (motors)
+    url: https://uae.dubizzle.com/motors/boats/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/boats"
+    r2_path: "{r2_bucket}/DUAE/motors/boats"
 
-  - name: number_plates (Motors)
-    url: https://uae.dubizzle.com/Motors/number-plates/
+  - name: number_plates (motors)
+    url: https://uae.dubizzle.com/motors/number-plates/
     batch: "Motors"
     workflow_file: Motors.yml
-    r2_path: "{r2_bucket}/DUAE/Motors/number-plates"
+    r2_path: "{r2_bucket}/DUAE/motors/number-plates"
 
   - name: sale_residential (property)
     url: https://uae.dubizzle.com/en/property-for-sale/residential/
@@ -831,7 +831,6 @@ _col_rent_residential: &col_rent_residential
   - amenities_v2
   - has_dld_history
   - objectID
-  - description_full
 
 _col_rent_rooms_rent_flatmates: &col_rent_rooms_rent_flatmates
   - feed_id
@@ -909,7 +908,6 @@ _col_rent_rooms_rent_flatmates: &col_rent_rooms_rent_flatmates
   - seo_links
   - objectID
   - amenities
-  - description_full
 
 _col_rent_commercial: &col_rent_commercial
   - id
@@ -980,7 +978,6 @@ _col_rent_commercial: &col_rent_commercial
   - tour_url
   - agent
   - objectID
-  - description_full
 
 _col_rent_holiday_homes: &col_rent_holiday_homes
   - trucheck_verified_at
@@ -1064,7 +1061,6 @@ _col_rent_holiday_homes: &col_rent_holiday_homes
   - landmarks
   - feed_id
   - objectID
-  - description_full
 
 _col_rent_short_term: &col_rent_short_term
   - city
@@ -1134,7 +1130,6 @@ _col_rent_short_term: &col_rent_short_term
   - name
   - category_id
   - objectID
-  - description_full
 
 _col_sale_residential: &col_sale_residential
   - project_id
@@ -1224,7 +1219,6 @@ _col_sale_residential: &col_sale_residential
   - feed_id
   - objectID
   - amenities
-  - description_full
 
 _col_sale_multiple_units: &col_sale_multiple_units
   - id
@@ -1309,7 +1303,6 @@ _col_sale_multiple_units: &col_sale_multiple_units
   - is_dkf827492
   - ranking_v2
   - objectID
-  - description_full
 
 _col_sale_commercial: &col_sale_commercial
   - can_chat
@@ -1394,7 +1387,6 @@ _col_sale_commercial: &col_sale_commercial
   - name
   - city
   - objectID
-  - description_full
 
 _col_sale_land: &col_sale_land
   - handover_date
@@ -1477,7 +1469,6 @@ _col_sale_land: &col_sale_land
   - agency_tier
   - allowed_pages
   - objectID
-  - description_full
 
 _col_classifieds_community_listing: &col_classifieds_community_listing
   - _geoloc
@@ -1683,7 +1674,7 @@ excel_schema:
 
   # ── BATCH Motors ─────────────────────────────────────────────────
 
-  - scraper: used_cars (Motors)
+  - scraper: used_cars (motors)
     excel_file_pattern: "{brand_name}.xlsx"
     sheets:
       - name: "{car_type}"
@@ -1691,7 +1682,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: new_cars (Motors)
+  - scraper: new_cars (motors)
     excel_file_pattern: "{brand_name}.xlsx"
     sheets:
       - name: "{car_type}"
@@ -1699,7 +1690,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: export_cars (Motors)
+  - scraper: export_cars (motors)
     excel_file_pattern: "{brand_name}.xlsx"
     sheets:
       - name: "{car_type}"
@@ -1707,7 +1698,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: rental_cars (Motors)
+  - scraper: rental_cars (motors)
     excel_file_pattern: "{brand_name}.xlsx"
     sheets:
       - name: "{car_type}"
@@ -1715,7 +1706,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: motorcycles (Motors)
+  - scraper: motorcycles (motors)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1723,7 +1714,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: auto_accessories_parts (Motors)
+  - scraper: auto_accessories_parts (motors)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1731,7 +1722,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: heavy_vehicles (Motors)
+  - scraper: heavy_vehicles (motors)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1739,7 +1730,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: boats (Motors)
+  - scraper: boats (motors)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1747,7 +1738,7 @@ excel_schema:
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
-  - scraper: number_plates (Motors)
+  - scraper: number_plates (motors)
     excel_file_pattern: "{subcategory_slug}.xlsx"
     sheets:
       - name: "{child_category or Main}"
@@ -1761,6 +1752,8 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_sale_commercial
+        optional_columns:
+          - description_full
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1769,6 +1762,8 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_sale_land
+        optional_columns:
+          - description_full
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1778,6 +1773,8 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_sale_residential
+        optional_columns:
+          - description_full
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1786,6 +1783,8 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_sale_multiple_units
+        optional_columns:
+          - description_full
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1794,6 +1793,8 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_sale_residential
+        optional_columns:
+          - description_full
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1804,6 +1805,8 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_rent_residential
+        optional_columns:
+          - description_full
         row_count_range: [1, 3000]
     min_file_size_kb: 5
 
@@ -1812,6 +1815,8 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_rent_rooms_rent_flatmates
+        optional_columns:
+          - description_full
         row_count_range: [1, 600]
     min_file_size_kb: 5
   
@@ -1821,6 +1826,8 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_rent_commercial
+        optional_columns:
+          - description_full
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1829,6 +1836,8 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_rent_holiday_homes
+        optional_columns:
+          - description_full
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1837,6 +1846,8 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_rent_short_term
+        optional_columns:
+          - description_full
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -1845,6 +1856,8 @@ excel_schema:
     sheets:
       - name: "{child_category or Main}"
         required_columns: *col_rent_short_term
+        optional_columns:
+          - description_full
         row_count_range: [1, 600]
     min_file_size_kb: 5
 
@@ -2164,15 +2177,15 @@ alert_thresholds:
   # Per-scraper observed file-size floors (KB) from real stats × 50%, floored at schema min
   # Used as a fast check even before trend history exists
   observed_min_file_size_kb:
-    used_cars (Motors): 5
-    new_cars (Motors): 5
-    export_cars (Motors): 5
-    rental_cars (Motors): 5
-    motorcycles (Motors): 5
-    auto_accessories_parts (Motors): 5
-    heavy_vehicles (Motors): 5
-    boats (Motors): 5
-    number_plates (Motors): 5
+    used_cars (motors): 5
+    new_cars (motors): 5
+    export_cars (motors): 5
+    rental_cars (motors): 5
+    motorcycles (motors): 5
+    auto_accessories_parts (motors): 5
+    heavy_vehicles (motors): 5
+    boats (motors): 5
+    number_plates (motors): 5
     sale_commercial (property): 5
     sale_land (property): 5
     sale_residential (property): 5
