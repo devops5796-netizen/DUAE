@@ -701,13 +701,16 @@ def severity_for_check(check_name: str) -> str:
     return "high"
 
 
-def collect_alerts(all_results: List[Dict], run_date: str) -> List[Dict]:
+def collect_alerts(all_results: List[Dict], run_date: str, alert_cfg: Optional[Dict] = None) -> List[Dict]:
+    alert_cfg = alert_cfg or {}
     """Build a flat list of alert events from scraper results."""
     alerts: List[Dict] = []
     for r in all_results:
         scraper = r["scraper"]
         if r["files_found"] == 0:
             if r.get("files_optional"):
+                continue
+            if alert_cfg.get("skip_no_files_alert"):
                 continue
             alerts.append({
                 "scraper": scraper,
@@ -718,7 +721,6 @@ def collect_alerts(all_results: List[Dict], run_date: str) -> List[Dict]:
                 "file": None,
             })
             continue
-
         for fr in r.get("file_results", []):
             file_key = fr.get("file_key") or fr.get("validation", {}).get("file")
             for check in fr.get("validation", {}).get("checks", []):

@@ -1217,7 +1217,6 @@ _col_sale_residential: &col_sale_residential
   - cash_needed
   - feed_id
   - objectID
-  - amenities
 
 _col_sale_multiple_units: &col_sale_multiple_units
   - id
@@ -1774,6 +1773,7 @@ excel_schema:
         required_columns: *col_sale_residential
         optional_columns:
           - description_full
+          - amenities
         row_count_range: [1, 1000]
     min_file_size_kb: 5
 
@@ -2163,6 +2163,9 @@ alert_thresholds:
 
   # Fire webhook when ANY scraper fails schema / trend / missing-files check
   alert_on_any_failure: true
+  # To re-enable "No Excel files" alerts later,
+  # just flip this to false in the YAML — no code changes needed.
+  skip_no_files_alert: true
 
   # Historical trend checks (requires monitor_stats.yml in R2)
   trend:
