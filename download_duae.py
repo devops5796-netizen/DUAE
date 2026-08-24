@@ -22,7 +22,7 @@ s3 = boto3.client(
 # CONFIG
 # ============================================================
 
-r2_prefix = "qatarsale"
+r2_prefix = "haraj"
 
 # Everything under DUAE will be downloaded
 LOCAL_ROOT = f"{r2_prefix}"
