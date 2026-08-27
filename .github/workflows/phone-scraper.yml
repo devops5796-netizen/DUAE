@@ -35,7 +35,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas openpyxl boto3 python-dotenv
+          python -m pip install -r requirements.txt
+          camoufox fetch
 
       - name: Prepare scrape jobs
         env:
