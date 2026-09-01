@@ -411,11 +411,17 @@ def scrape_job(job_file: str, output_file: str):
         page = browser.new_page()
 
         for n, item in enumerate(items, 1):
+            listing_id = item["id"]
+
+            print(f"\n[{n}/{len(items)}] START listing: {listing_id}")
+            print(f"[{n}/{len(items)}] Need phone: {item.get('need_phone')}")
+            print(f"[{n}/{len(items)}] Need description: {item.get('need_description')}")
+
             result = {
                 "file_key": item["file_key"],
                 "sheet_name": item["sheet_name"],
                 "row_position": item["row_position"],
-                "id": item["id"],
+                "id": listing_id,
                 USER_COLUMN: item.get(USER_COLUMN),
                 USER_ID_COLUMN: item.get(USER_ID_COLUMN),
                 "phone": item.get("cached_phone"),
@@ -426,6 +432,7 @@ def scrape_job(job_file: str, output_file: str):
 
             url = extract_en_url(item.get("absolute_url"))
             if not url:
+                print("[ERROR] No URL")
                 if item.get("need_phone"):
                     result["phone_status"] = "no_url"
                 if item.get("need_description"):
@@ -433,34 +440,73 @@ def scrape_job(job_file: str, output_file: str):
                 results.append(result)
                 continue
 
-            print(f"[{n}/{len(items)}] {item['id']}")
+            print(f"[URL] {url}")
 
             try:
-                page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                page.goto(
+                    url,
+                    wait_until="domcontentloaded",
+                    timeout=45000,
+                )
+
                 page.wait_for_timeout(random.uniform(6000, 10000))
+
                 html = page.content()
 
                 if is_challenge_page(html):
-                    result["phone_status"] = "imperva_challenge" if item.get("need_phone") else result["phone_status"]
-                    result["description_status"] = "imperva_challenge" if item.get("need_description") else result["description_status"]
+                    print("[CHALLENGE] Imperva challenge detected")
+
+                    result["phone_status"] = (
+                        "imperva_challenge"
+                        if item.get("need_phone")
+                        else result["phone_status"]
+                    )
+
+                    result["description_status"] = (
+                        "imperva_challenge"
+                        if item.get("need_description")
+                        else result["description_status"]
+                    )
+
                     result["error"] = "challenge_page"
                     results.append(result)
                     break
 
+                # Phone
                 if item.get("need_phone"):
                     phone, status = reveal_phone(page)
+
                     result["phone"] = phone
                     result["phone_status"] = status
 
+                    if status == "ok":
+                        print("[PHONE] SUCCESS")
+                    else:
+                        print(f"[PHONE] FAILED: {status}")
+
+                # Description
                 if item.get("need_description"):
+                    print("[DESCRIPTION] Extracting description...")
+
                     desc = extract_description(page)
+
                     result["description_full"] = desc
-                    result["description_status"] = "ok" if desc else "not_found"
+
+                    if desc:
+                        result["description_status"] = "ok"
+                        print("[DESCRIPTION] SUCCESS")
+                    else:
+                        result["description_status"] = "not_found"
+                        print("[DESCRIPTION] FAILED: not_found")
 
             except Exception as exc:
+                print(f"[ERROR] {type(exc).__name__}: {exc}")
+
                 result["error"] = str(exc)
+
                 if item.get("need_phone") and not result["phone_status"]:
                     result["phone_status"] = f"error: {exc}"
+
                 if item.get("need_description") and not result["description_status"]:
                     result["description_status"] = f"error: {exc}"
 
@@ -470,10 +516,18 @@ def scrape_job(job_file: str, output_file: str):
                 time.sleep(random.uniform(10, 20))
 
     Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+
     Path(output_file).write_text(
-        json.dumps(results, ensure_ascii=False, default=str, indent=2),
+        json.dumps(
+            results,
+            ensure_ascii=False,
+            default=str,
+            indent=2,
+        ),
         encoding="utf-8",
     )
+
+    print(f"\n[JOB DONE] {len(results)}/{len(items)} listings processed")
 
 
 def build_excel_bytes(sheets: dict[str, pd.DataFrame]) -> bytes:
