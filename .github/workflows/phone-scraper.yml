@@ -108,7 +108,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas openpyxl boto3 python-dotenv camoufox
+          python -m pip install -r requirements.txt
 
       - name: Install Camoufox browser
         run: |
