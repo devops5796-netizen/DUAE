@@ -57,16 +57,23 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
 
-          manifest = json.loads(Path("work/manifest.json").read_text(encoding="utf-8"))
+          manifest = json.loads(
+              Path("work/manifest.json").read_text(encoding="utf-8")
+          )
+
           jobs = list(range(manifest["total_jobs"]))
 
           matrix = {"job": jobs}
+
           print("matrix:", json.dumps(matrix))
           print("has_jobs:", bool(jobs))
 
-          with open("${GITHUB_OUTPUT}", "a", encoding="utf-8") as f:
+          github_output = os.environ["GITHUB_OUTPUT"]
+
+          with open(github_output, "a", encoding="utf-8") as f:
               f.write(f"matrix={json.dumps(matrix)}\n")
               f.write(f"has_jobs={'true' if jobs else 'false'}\n")
           PY
