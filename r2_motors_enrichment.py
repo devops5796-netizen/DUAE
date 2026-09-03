@@ -25,7 +25,6 @@ from typing import Any
 
 import boto3
 import pandas as pd
-from camoufox.sync_api import Camoufox
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -399,6 +398,7 @@ def reveal_phone(page, timeout_ms=10000):
 
 
 def scrape_job(job_file: str, output_file: str):
+    from camoufox.sync_api import Camoufox
     items = json.loads(Path(job_file).read_text(encoding="utf-8"))
     results = []
 
