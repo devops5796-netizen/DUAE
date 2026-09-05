@@ -7,8 +7,10 @@ on:
         description: "Date to enrich (YYYY-MM-DD). Leave empty for yesterday in Asia/Dubai."
         required: false
         type: string
-  schedule:
-    - cron: "0 2 * * *"  # 10:30 AM Asia/Dubai
+  workflow_run:
+    workflows: ["Motors"]
+    types:
+      - completed
 
 permissions:
   contents: read

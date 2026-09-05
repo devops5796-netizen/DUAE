@@ -591,8 +591,10 @@ def combine(results_dir: str, date_str: str | None):
                 continue
             if PHONE_COLUMN not in df.columns:
                 df[PHONE_COLUMN] = None
+            df[PHONE_COLUMN] = df[PHONE_COLUMN].astype(object)
             if DESCRIPTION_COLUMN not in df.columns:
                 df[DESCRIPTION_COLUMN] = None
+            df[DESCRIPTION_COLUMN] = df[DESCRIPTION_COLUMN].astype(object)
 
             for pos, (_, row) in enumerate(df.iterrows()):
                 listing_id = row.get("id")
@@ -603,7 +605,7 @@ def combine(results_dir: str, date_str: str | None):
                     continue
 
                 if not is_empty(u.get("phone")):
-                    df.at[df.index[pos], PHONE_COLUMN] = u["phone"]
+                    df.at[df.index[pos], PHONE_COLUMN] = str(u["phone"]).strip()
                     changed = True
 
                 if u.get("description_status") == "ok" and not is_empty(u.get("description_full")):
