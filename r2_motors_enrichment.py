@@ -139,7 +139,7 @@ def is_empty(value: Any) -> bool:
 
 
 def excel_sheets(data: bytes) -> dict[str, pd.DataFrame]:
-    return pd.read_excel(io.BytesIO(data), sheet_name=None)
+    return pd.read_excel(io.BytesIO(data), sheet_name=None, dtype={PHONE_COLUMN: str})
 
 
 def read_cached_users(client, users_key: str) -> dict[str, dict]:
