@@ -22,8 +22,9 @@ data_format: xlsx
 workflows:
   - "Motors"
   - "Rent Property"
+  - "Rent Property2"
   - "Jobs"
-  - "Classifieds & Community"
   - "Sale Property"
   - "Sale Property2"
-  - "Rent Property2"
+  - "Classifieds"
+  - "Community"

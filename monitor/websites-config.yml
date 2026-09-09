@@ -362,17 +362,16 @@ scrapers:
 pipeline_chain:
   - batch: "Motors"
     trigger: "cron: '0 0 * * *'"
-    triggers_next: "Sale Property"
+    triggers_next: null
 
   - batch: "Rent Property"
     trigger: "cron: '0 0 * * *'"
+    triggers_next: "Rent Property2"
+  - batch: "Rent Property2"
+    trigger: "on_completion: Rent Property"
     triggers_next: "Jobs"
   - batch: "Jobs"
-    trigger: "on_completion: Rent Property"
-    triggers_next: null
-
-  - batch: "Classifieds & Community"
-    trigger: "cron: '0 0 * * *'"
+    trigger: "on_completion: Rent Property2"
     triggers_next: null
   
   - batch: "Sale Property"
@@ -382,7 +381,11 @@ pipeline_chain:
     trigger: "on_completion: Sale Property"
     triggers_next: null
 
-  - batch: "Rent Property2"
+  - batch: "Classifieds"
+    trigger: "cron: '0 0 * * *'"
+    triggers_next: null
+
+  - batch: "Community"
     trigger: "cron: '0 0 * * *'"
     triggers_next: null
 
