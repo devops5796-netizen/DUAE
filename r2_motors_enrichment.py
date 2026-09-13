@@ -285,7 +285,15 @@ def prepare(date_str: str | None, out_dir: str):
         encoding="utf-8",
     )
 
+    zero_visit_items = sum(1 for w in work if not w["need_phone"] and not w["need_description"])
+    needs_visit_items = len(work) - zero_visit_items
+    needs_phone_count = sum(1 for w in work if w["need_phone"])
+    needs_description_count = sum(1 for w in work if w["need_description"])
+
     print(f"[PREPARE] Work items: {len(work)}")
+    print(f"[PREPARE]   -> {zero_visit_items} need ZERO browser visits (phone fully satisfied by cache)")
+    print(f"[PREPARE]   -> {needs_visit_items} need an actual visit (phone and/or description)")
+    print(f"[PREPARE]      of which {needs_phone_count} need a phone visit, {needs_description_count} need a description visit (a row can need both)")
     print(f"[PREPARE] Jobs: {len(chunks)} (max 15 items/job)")
     print(f"[PREPARE] Manifest: {out / 'manifest.json'}")
 
