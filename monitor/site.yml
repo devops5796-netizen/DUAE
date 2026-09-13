@@ -20,11 +20,11 @@ scrapers: 56
 schedule: daily
 data_format: xlsx
 workflows:
-  - "Motors"
-  - "Rent Property"
-  - "Rent Property2"
-  - "Jobs"
-  - "Sale Property"
-  - "Sale Property2"
-  - "Classifieds"
-  - "Community"
+  - "Motors"          #devops5796-netizen    
+  - "Rent Property"   #Dev545989
+  - "Rent Property2"  #Dev545989
+  - "Jobs"            #Dev545989   
+  - "Sale Property"   #work59
+  - "Sale Property2"  #work59
+  - "Classifieds"     #wwo825
+  - "Community"       #hr874878
