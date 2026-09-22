@@ -1777,7 +1777,7 @@ excel_schema:
         optional_columns:
           - description_full
           - amenities
-        row_count_range: [1, 1000]
+        row_count_range: [1, 1200]
     min_file_size_kb: 5
 
   - scraper: sale_multiple_units (property)
@@ -1809,7 +1809,7 @@ excel_schema:
         required_columns: *col_rent_residential
         optional_columns:
           - description_full
-        row_count_range: [1, 4000]
+        row_count_range: [1, 4500]
     min_file_size_kb: 5
 
   - scraper: rent_rooms_rent_flatmates (property)
