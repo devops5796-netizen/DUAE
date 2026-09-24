@@ -37,21 +37,26 @@ from request_tracker import tracker
 # Config
 # =============================================================================
 
+# Same origin/referer as main_nw_proj.py — the search-only Algolia key may be
+# referrer-restricted, so keep this identical to the endpoint that's known to work.
 HEADERS = {
     "accept": "*/*",
     "content-type": "application/json",
-    "origin": "https://dubai.dubizzle.com",
-    "referer": "https://dubai.dubizzle.com/",
+    "origin": "https://uae.dubizzle.com",
+    "referer": "https://uae.dubizzle.com/",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
 }
 
-# NOTE: this is Dubizzle's own Algolia proxy (algolia.dubizzle.com), NOT the
-# direct Algolia endpoint used in main_nw_proj.py. The proxy injects the API
-# key / application ID server-side, so no x-algolia-api-key /
-# x-algolia-application-id is needed here.
-LISTINGS_URL = "https://algolia.dubizzle.com/1/indexes/*/queries"
+# NOTE: Dubizzle's own proxy (algolia.dubizzle.com) sits behind Imperva bot
+# protection (requires a browser-solved challenge cookie) and returns 403 for
+# plain server-side requests. We instead hit the same direct Algolia
+# application main_nw_proj.py already uses successfully for the projects
+# index — same app id / search-only api key, just a different index name.
+LISTINGS_URL = "https://wd0ptz13zs-1.algolianet.com/1/indexes/*/queries"
 LISTINGS_QUERY_PARAMS = {
     "x-algolia-agent": "Algolia for JavaScript (4.24.0); Browser (lite)",
+    "x-algolia-api-key": "cdd839b4fdac840289e88633779e8634",
+    "x-algolia-application-id": "WD0PTZ13ZS",
 }
 
 HITS_PER_PAGE = 25
