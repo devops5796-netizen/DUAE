@@ -5,7 +5,6 @@ import requests
 import random
 from urllib.parse import urlencode
 from datetime import datetime
-from datetime import datetime, timezone, timedelta
 from request_tracker import tracker
 
 URL = "https://wd0ptz13zs-1.algolianet.com/1/indexes/*/queries"
@@ -71,29 +70,6 @@ def get_page_with_retry(page: int, max_retries: int = 3) -> dict:
 
     return None
 
-TARGET_DATE = datetime.now(timezone.utc).date() - timedelta(days=1)
-
-
-def filter_yesterday_hits(hits):
-    filtered = []
-
-    for hit in hits:
-        created_at = hit.get("created_at")
-
-        if created_at is None:
-            continue
-
-        try:
-            dt = datetime.fromtimestamp(int(created_at), tz=timezone.utc)
-
-            if dt.date() == TARGET_DATE:
-                filtered.append(hit)
-
-        except (ValueError, TypeError):
-            pass
-
-    return filtered
-
 def run(start_page: int, end_page: int, output_jsonl: str) -> dict:
     print(f"Scraping new_projects | pages {start_page}-{end_page}")
 
@@ -111,25 +87,14 @@ def run(start_page: int, end_page: int, output_jsonl: str) -> dict:
             continue
 
         try:
-            # page_hits = data["results"][0]["hits"]
-            # print(f"  Page {page}: {len(page_hits)} listings")
-
-            # if not page_hits:
-            #     print(f"  Page {page} has no results, stopping...")
-            #     break
-
-            # hits.extend(page_hits)
-
             page_hits = data["results"][0]["hits"]
+            print(f"  Page {page}: {len(page_hits)} listings")
+
             if not page_hits:
                 print(f"  Page {page} has no results, stopping...")
                 break
-            filtered_hits = filter_yesterday_hits(page_hits)
-            print(
-                f"  Page {page}: {len(page_hits)} listings "
-                f"-> kept {len(filtered_hits)}"
-            )
-            hits.extend(filtered_hits)
+
+            hits.extend(page_hits)
             delay = random.uniform(0.5, 2.0)
             time.sleep(delay)
 

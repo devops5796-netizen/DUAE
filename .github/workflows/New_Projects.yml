@@ -1,0 +1,98 @@
+name: New Projects
+
+on:
+  workflow_dispatch:
+    inputs:
+      chunk_size:
+        description: "How many pages each parallel job scrapes"
+        required: false
+        default: "5"
+  schedule:
+    # Runs once a day — adjust to whenever you want "yesterday's" listings pulled.
+    - cron: "0 2 * * *"
+
+jobs:
+  detect-pages:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+      nb_pages: ${{ steps.detect.outputs.nb_pages }}
+
+    env:
+      CHUNK_SIZE: ${{ github.event.inputs.chunk_size || '5' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      # Hits page 0 of the new_projects index to read nbPages, then builds
+      # a matrix of {start_page, end_page} chunks for the job below.
+      - name: Detect total pages and build matrix
+        id: detect
+        run: python detect_pages.py
+
+  scrape-projects-and-listings:
+    needs: detect-pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect-pages.outputs.matrix) }}
+
+    env:
+      CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+      CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
+      CF_R2_ENDPOINT_URL: ${{ secrets.CF_R2_ENDPOINT_URL }}
+      CF_R2_BUCKET_NAME: ${{ secrets.CF_R2_BUCKET_NAME }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pandas openpyxl boto3 python-dotenv pillow
+
+      # Stage 1: scrape this matrix chunk's page range from new_projects.
+      # Produces new_projects_<start>_<end>.jsonl (+ _failed.txt / _result.json if any pages fail).
+      - name: Run new_projects scraper (main_nw_proj.py)
+        run: |
+          python main_nw_proj.py "${{ matrix.start_page }}" "${{ matrix.end_page }}"
+
+      # Stage 2: for every project scraped above, fetch its residential/commercial/land
+      # listings, keep only yesterday's posts, split into sheets, write excel/json,
+      # and upload each project + this chunk's run summary to R2. Skips empty projects.
+      - name: Run project listings pipeline (new_projects_listings.py)
+        run: |
+          python new_projects_listings.py "new_projects_${{ matrix.start_page }}_${{ matrix.end_page }}.jsonl"
+
+      # Keep local artifacts (jsonl / failed pages / excel / json / summary) attached to the
+      # run for debugging, even though the real output already lives on R2.
+      - name: Upload run artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: new-projects-listings-${{ matrix.start_page }}-${{ matrix.end_page }}
+          path: |
+            new_projects_${{ matrix.start_page }}_${{ matrix.end_page }}.jsonl
+            new_projects_${{ matrix.start_page }}_${{ matrix.end_page }}_failed.txt
+            new_projects_${{ matrix.start_page }}_${{ matrix.end_page }}_result.json
+            output/new_projects_listings/**
+          if-no-files-found: ignore
+          retention-days: 14
