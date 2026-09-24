@@ -1797,7 +1797,7 @@ excel_schema:
         required_columns: *col_sale_residential
         optional_columns:
           - description_full
-        row_count_range: [1, 1000]
+        row_count_range: [1, 2000]
     min_file_size_kb: 5
 
   # ── BATCH Rent Property ─────────────────────────────────────────────────
