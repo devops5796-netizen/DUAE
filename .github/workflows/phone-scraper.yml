@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       date:
-        description: "Date to enrich (YYYY-MM-DD). Leave empty for yesterday in Asia/Dubai."
+        description: "Date to enrich (YYYY-MM-DD). Leave empty for yesterday."
         required: false
         type: string
   workflow_run:

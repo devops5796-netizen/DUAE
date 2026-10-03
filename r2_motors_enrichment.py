@@ -34,7 +34,6 @@ R2_SECRET_KEY = os.getenv("CF_R2_SECRET_ACCESS_KEY")
 R2_ENDPOINT = os.getenv("CF_R2_ENDPOINT_URL", "").rstrip("/")
 R2_BUCKET = os.getenv("CF_R2_BUCKET_NAME", "")
 MOTORS_PREFIX = os.getenv("MOTORS_PREFIX", "DUAE")
-DUBAI_TZ = "Asia/Dubai"
 
 PHONE_COLUMN = "contact_phone_number"
 DESCRIPTION_COLUMN = "description_full"
@@ -60,9 +59,7 @@ def yesterday_prefix(date_str: str | None = None) -> tuple[str, str]:
     if date_str:
         target = datetime.strptime(date_str, "%Y-%m-%d").date()
     else:
-        now = datetime.now(timezone.utc)
-        dubai_now = now.astimezone(__import__("zoneinfo").ZoneInfo(DUBAI_TZ))
-        target = dubai_now.date() - timedelta(days=1)
+        target = datetime.now(timezone.utc).date() - timedelta(days=1)
     prefix = f"{MOTORS_PREFIX}/year={target.year}/month={target.month:02d}/day={target.day:02d}/motors/"
     return target.isoformat(), prefix
 
@@ -715,7 +712,7 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("prepare")
-    p.add_argument("--date", default=None, help="YYYY-MM-DD; defaults to yesterday in Asia/Dubai")
+    p.add_argument("--date", default=None, help="YYYY-MM-DD; defaults to yesterday")
     p.add_argument("--out", default="work")
 
     s = sub.add_parser("scrape")

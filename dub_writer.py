@@ -628,7 +628,6 @@ def convert_timestamp_columns(df: pd.DataFrame) -> pd.DataFrame:
                     errors="coerce",
                     utc=True
                 )
-                .dt.tz_convert("Asia/Dubai")
                 .dt.strftime("%Y-%m-%d %H:%M:%S")
             )
 

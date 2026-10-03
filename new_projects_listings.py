@@ -4,7 +4,7 @@ new_projects_listings.py
 For each project produced by main_nw_proj.py (new_projects scraper), fetch all
 listings (ads) that live inside that project across the three property
 categories (residential / commercial / land), keep only the ones posted
-"yesterday" (Asia/Dubai), split them into sheets by categories.slug_paths
+"yesterday", split them into sheets by categories.slug_paths
 (e.g. "residential-apartment", "commercial-shop"), write one
 <project-name>.xlsx + <project-name>.json per project (no images), upload
 them to R2, and build one summary.json for the whole run.
@@ -93,8 +93,8 @@ CATEGORY_QUERIES = {
 
 R2_CATEGORY_PATH = "property/property-for-sale/new-projects"
 
-DUBAI_NOW = datetime.now(ZoneInfo("Asia/Dubai"))
-TARGET_DATE = DUBAI_NOW.date() - timedelta(days=1)
+utc_now = datetime.now(timezone.utc)
+TARGET_DATE = (utc_now.date() - timedelta(days=1))
 
 
 # =============================================================================
@@ -155,12 +155,12 @@ def extract_date_from_url(url: str):
 
 
 def get_date_from_timestamp(timestamp_value):
-    """Convert Unix timestamp to Dubai date."""
+    """Convert Unix timestamp to UTC date."""
     if timestamp_value is None:
         return None
     try:
         dt = datetime.fromtimestamp(int(timestamp_value), tz=timezone.utc)
-        return dt.astimezone(ZoneInfo("Asia/Dubai")).date()
+        return dt.date()
     except (ValueError, TypeError):
         return None
 
